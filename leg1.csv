@@ -1,0 +1,24 @@
+Ordre,Zone,Site_ID,Site ID / carotte,Site family,Longitude,Latitude,EEZ,Depth (m),Priorité,CS Site survey (h),C1 CTD/Rosette phyto (h),C2 CTD/Rosette hydro (h),MN MultiNet (h),NP Filet phyto/ADN (h),NM Filet mesozoo (h),CA Calypso (h),MT MultiTube (h),Ops total (h),Commentaire
+1,Nouméa,Nou,Nouméa,Port call,166.458,-22.2758,France – Nouvelle-Calédonie,N/R,,,,,,,,,,0,Départ
+2,Bassin des Loyautés,Loy1,Loy1 (test),Test / carotte,165.84826,-20.7407,France – Nouvelle-Calédonie,2100,Test,3,2,,,,,5,,10,"STATION AJOUTÉE. Test carottier Calypso. Quasi sur la route Nouméa→OJP_1. Coords 20°44'26.51""S 165°50'53.72""E. Temps carottage recalculé par profondeur (2100 m)."
+3,Ontong-Java Plateau,OJP_1,Explo1,latitudinal + test,157,-4,Haute mer (None),1600,1,6,2,3,2,1,1,4,2,21,Test station
+4,Ontong-Java Plateau,OJP_2,92BX,latitudinal transect,156.998,-2.225,Papouasie-Nouvelle-Guinée,1598,1,1,2,,2,,,,2,7,Shallowest OJP site
+5,Ontong-Java Plateau,OJP_3,83BX,latitudinal transect,156.31,1.402,États fédérés de Micronésie,2342,2,1,2,3,2,1,,,3,12,
+6,Ontong-Java Plateau,OJP_4,ODP 807,latitudinal transect,156.625,3.607,États fédérés de Micronésie,2804,1,1,2,,2,1,1,5,3,15,ODP ref
+7,Ontong-Java Plateau,OJP_5,120BX,latitudinal+depth,158.693,-0.025,Papouasie-Nouvelle-Guinée,2247,1,1,2,,2,1,1,5,3,15,
+8,Ontong-Java Plateau,OJP_6,ODP 806,latitudinal+depth,159.369,0.32,États fédérés de Micronésie,2521,1,1,2,,2,1,1,5,3,15,ODP Leg 130 ref
+9,Ontong-Java Plateau,OJP_7,123BX,depth transect,160.415,-0.022,États fédérés de Micronésie,2948,2,1,2,3,,1,,,3,10,
+10,Ontong-Java Plateau,OJP_9,128BX,depth transect,160.427,-0.005,États fédérés de Micronésie,3732,1,1,2,,,1,1,6,4,15,Deepest site. Réordonné avant OJP_8.
+11,Ontong-Java Plateau,OJP_8,125BX,depth transect,160.998,-0.003,États fédérés de Micronésie,3368,2,1,2,,,,,,3,6,
+12,Nauru-Tuvalu,NT_1,VM19-96,latitudinal transect,172,-0.867,Kiribati – îles Gilbert,4252,1,3,2,3,2,,1,6,4,21,
+13,Nauru-Tuvalu,NT_2,VM28-225,latitudinal transect,174.467,-8.333,Tuvalu,5298,1,3,2,3,2,1,1,6,4,22,
+14,Nauru-Tuvalu,NT_3,NT_3 (joker),Conditionnel,179,-10.5,Tuvalu (limite Est) – à confirmer,5000,Joker→Actif,3,2,3,2,1,1,6,4,22,"STATION JOKER ACTIVÉE (profil complet = NT_2). Prof. 5000 m (hypothèse, à confirmer). Sur route NT_2→Apia, limite Est ZEE Tuvalu (à confirmer VLIZ)."
+15,Apia,Apia,Apia,Port call,-171.783,-13.833,Samoa,,,,,,,,,,,0,ESCALE IMPOSÉE
+,,,,,,,,,TOTAL ops (h),,,,,,,,,191,
+,,,,,,,,,,,,,,,,,,,
+,Synthèse temps,,,,,,,,,,,,,,,,,,
+,Transit estimé (h),,409.8,Grand-cercle @10 nds (approx),,,,,,,,,,,,,,,
+,Opérations (h),,191,,,,,,,,,,,,,,,,
+,TOTAL (jours),,25.0333333333333,,,,,,,,,,,,,,,,
+,Limite (jours),,26,,,,,,,,,,,,,,,,
+,Marge (jours),,0.966666666666669,,,,,,,,,,,,,,,,

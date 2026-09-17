@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>TransPac — Cartes bathymétriques Leg 1 & Leg 2 (v2)</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+  :root{--fg:#1a1a1a;--muted:#555;--bd:#ddd;--bg:#f6f6f4;}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--fg);background:var(--bg)}
+  header{padding:14px 18px;border-bottom:1px solid var(--bd);background:#fff}
+  h1{font-size:18px;font-weight:600;margin:0 0 4px}
+  header p{margin:0;font-size:13px;color:var(--muted)}
+  .controls{padding:10px 18px;background:#fff;border-bottom:1px solid var(--bd);display:flex;gap:18px;flex-wrap:wrap;align-items:center;font-size:14px}
+  .controls label{display:flex;align-items:center;gap:6px;cursor:pointer}
+  #map{width:100%;height:70vh;min-height:460px}
+  .legend{background:#fff;padding:10px 12px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.2);font-size:12px;line-height:1.6;max-width:240px}
+  .legend b{display:block;margin-bottom:4px;font-size:12px}
+  .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+  .swatch{display:inline-block;width:12px;height:10px;margin-right:6px;vertical-align:-1px;opacity:.55}
+  .foot{padding:10px 18px;font-size:12px;color:var(--muted);background:#fff;border-top:1px solid var(--bd)}
+  .stapopup{font-size:13px;line-height:1.5}
+  .stapopup b{font-size:14px}
+  .instr{margin-top:4px}
+  .instr span{display:inline-block;background:#eef;border:1px solid #ccd;border-radius:4px;padding:1px 5px;margin:1px 2px 1px 0;font-size:11px}
+  .eezlbl{background:transparent;border:none;box-shadow:none;color:#0a4;font-weight:600;font-size:12px;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff}
+  .newlbl{color:#b8340c !important}
+  .leaflet-tooltip.stlabel{background:rgba(255,255,255,.85);border:1px solid #bbb;font-size:11px;padding:1px 4px}
+</style>
+</head>
+<body>
+<header>
+  <h1>TransPac 27 — Cartes bathymétriques (proposition v2)</h1>
+  <p>Fond GEBCO 2024. Leg 1 Nouméa→Apia (bleu) · Leg 2 Apia→Papeete (orange). Stations ajoutées en rouge (Loy1, Fa'aroa). Cliquez une station pour ses instruments.</p>
+</header>
+<div class="controls">
+  <label><input type="checkbox" id="cbLeg1" checked> Leg 1 (Nouméa→Apia)</label>
+  <label><input type="checkbox" id="cbLeg2" checked> Leg 2 (Apia→Papeete)</label>
+  <label><input type="checkbox" id="cbEEZ" checked> Frontières ZEE</label>
+  <label><input type="checkbox" id="cbEEZname" checked> Noms des ZEE</label>
+  <label><input type="checkbox" id="cbBathy" checked> Bathymétrie GEBCO</label>
+</div>
+<div id="map"></div>
+<div class="foot">
+  Instruments : CS site survey · C1 CTD/Rosette phyto · C2 CTD/Rosette hydro · MN MultiNet · NP filet phyto/ADN · NM filet mésozooplancton · CA carottier Calypso · MT MultiTube.<br>
+  Bathymétrie : GEBCO Grid (WMS gebco.net). Frontières ZEE : Marine Regions / VLIZ. Noms de ZEE positionnés manuellement (indicatifs).
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// [code, site, lon, lat, type, instruments, depth, isNew]
+const LEG1 = [
+ ["Nou","Nouméa",166.458,-22.2758,"port","",null,false],
+ ["Loy1","Bassin des Loyautés (test)",165.84826,-20.7407,"op","CS,C1,CA","~2100",true],
+ ["OJP_1","Explo1",157.0,-4.0,"op","CS,C1,C2,MN,NP,NM,CA,MT","~1600",false],
+ ["OJP_2","92BX",156.998,-2.225,"op","CS,C1,MN,MT","1598",false],
+ ["OJP_3","83BX",156.31,1.402,"op","CS,C1,C2,MN,NP,MT","2342",false],
+ ["OJP_4","ODP807",156.625,3.607,"op","CS,C1,MN,NP,NM,CA,MT","2804",false],
+ ["OJP_5","120BX",158.693,-0.025,"op","CS,C1,MN,NP,NM,CA,MT","2247",false],
+ ["OJP_6","ODP806",159.369,0.32,"op","CS,C1,MN,NP,NM,CA,MT","2521",false],
+ ["OJP_7","123BX",160.415,-0.022,"op","CS,C1,C2,NP,MT","2948",false],
+ ["OJP_9","128BX",160.427,-0.005,"op","CS,C1,NP,NM,CA,MT","3732",false],
+ ["OJP_8","125BX",160.998,-0.003,"op","CS,C1,MT","3368",false],
+ ["NT_1","VM19-96",172.0,-0.867,"op","CS,C1,C2,MN,NM,CA,MT","4252",false],
+ ["NT_2","VM28-225",174.467,-8.333,"op","CS,C1,C2,MN,NP,NM,CA,MT","5298",false],
+ ["NT_3","VM-joker activé (profil NT_2)",179.0,-10.5,"op","CS,C1,C2,MN,NP,NM,CA,MT","~5000",true],
+ ["Apia","Apia",-171.783,-13.833,"port","",null,false],
+];
+const LEG2 = [
+ ["Apia","Apia",-171.783,-13.833,"port","",null,false],
+ ["ESAM","East Samoa (ex-WTOK, recalé E)",-168.0,-12.5,"op","CS,C1,C2,MN,NP,NM,MT",null,false],
+ ["MH_3","ManiHiki 1",-162.88845,-11.16221,"op","CS,C1,CA,MT","2800",false],
+ ["MH_4","ManiHiki High",-161.532,-11.051,"op","C1,MN,NP,NM,CA,MT","3011",false],
+ ["MH_1","ManiHiki W",-165.053,-7.199,"op","CS,C1,MT","3589",false],
+ ["MH_2","ManiHiki N",-164.887,-3.792,"op","CS,C1,C2,MN,NP,NM,CA,MT","3558",false],
+ ["LI_2","Line N",-161.63,7.04,"op","CS,C1,C2,MN,NP,NM,CA,MT","2798",false],
+ ["LI_1","Line S",-156.45,0.48,"op","CS,C1,C2,MN,NP,NM,CA,MT","2926",false],
+ ["CHAL","Challenger",-152.33889,-3.64431,"op","CS,C1,C2,MN,NP,NM,MT",null,false],
+ ["VOST","Vostok",-151.0,-10.0,"op","CS,C1,C2,MN,NP,NM,MT",null,false],
+ ["Faaroa","Baie de Fa'aroa, Raiatea (carotte)",-151.397,-16.820,"op","CA","côtier",true],
+ ["Pap","Papeete",-149.5705,-17.5353,"port","",null,false],
+];
+
+// Noms de ZEE [label, lat, lon]
+const EEZ_NAMES = [
+ ["France – Nouvelle-Calédonie",-21.0,164.0],
+ ["Papouasie – Nouvelle-Guinée",-3.0,153.5],
+ ["États fédérés de Micronésie",2.5,158.0],
+ ["Kiribati (îles Gilbert)",-1.0,174.5],
+ ["Tuvalu",-8.0,178.0],
+ ["Samoa",-13.8,-172.0],
+ ["Kiribati (îles Line)",-2.0,-160.0],
+ ["États-Unis (Palmyra / Kingman)",6.5,-162.0],
+ ["Îles Cook",-13.0,-160.0],
+ ["France – Polynésie française",-15.5,-149.0],
+ ["Haute mer (ABNJ)",-9.0,-170.0],
+];
+
+function norm(lon){ return lon<0 ? lon+360 : lon; }
+function toLatLng(s){ return [s[3], norm(s[2])]; }
+
+const map = L.map('map',{worldCopyJump:true}).setView([-6, 178], 4);
+
+const relief = L.tileLayer(
+  "https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}",
+  {attribution:"Esri Ocean Basemap", maxZoom:10});
+relief.addTo(map);
+const bathy = L.tileLayer.wms("https://wms.gebco.net/mapserv?", {
+  layers:"GEBCO_LATEST", format:"image/png", transparent:false,
+  attribution:"GEBCO Compilation Group (2024)"});
+bathy.addTo(map);
+const eez = L.tileLayer.wms("https://geo.vliz.be/geoserver/MarineRegions/wms?", {
+  layers:"eez_boundaries", format:"image/png", transparent:true,
+  attribution:"Marine Regions (VLIZ)"});
+eez.addTo(map);
+
+// couche noms ZEE
+const eezNames = L.layerGroup();
+EEZ_NAMES.forEach(z=>{
+  const m=L.marker([z[1],norm(z[2])],{opacity:0,interactive:false});
+  m.bindTooltip(z[0],{permanent:true,direction:"center",className:"eezlbl"});
+  eezNames.addLayer(m);
+});
+eezNames.addTo(map);
+
+function stationIcon(color,isNew){
+  const ring = isNew ? "#b8340c" : "#333";
+  const size = isNew ? 17 : 14;
+  return L.divIcon({className:"", html:`<div style="width:${size}px;height:${size}px;border-radius:50%;background:${isNew?'#e23b1a':color};border:2px solid #fff;box-shadow:0 0 0 2px ${ring}"></div>`, iconSize:[size,size], iconAnchor:[size/2,size/2]});
+}
+function portIcon(){
+  return L.divIcon({className:"", html:`<div style="width:14px;height:14px;background:#333;border:2px solid #fff;box-shadow:0 0 0 1px #333"></div>`, iconSize:[14,14], iconAnchor:[7,7]});
+}
+function popupHtml(s){
+  let h=`<div class="stapopup"><b>${s[0]}</b> — ${s[1]}<br>${s[3].toFixed(4)}°, ${s[2].toFixed(4)}°`;
+  if(s[6]) h+=` · profondeur ${s[6]} m`;
+  if(s[5]){h+=`<div class="instr">`;s[5].split(",").forEach(i=>h+=`<span>${i}</span>`);h+=`</div>`;}
+  if(s[7]) h+=`<div style="margin-top:4px;color:#b8340c;font-size:11px">Station ajoutée (proposition)</div>`;
+  h+=`</div>`;return h;
+}
+function buildLeg(data,color){
+  const grp=L.layerGroup();
+  grp.addLayer(L.polyline(data.map(toLatLng),{color:color,weight:3,opacity:.9}));
+  data.forEach(s=>{
+    const m=L.marker(toLatLng(s),{icon:s[4]==="port"?portIcon():stationIcon(color,s[7])});
+    m.bindPopup(popupHtml(s));
+    m.bindTooltip(s[0],{permanent:true,direction:"top",offset:[0,-8],className:"stlabel"+(s[7]?" newlbl":"")});
+    grp.addLayer(m);
+  });
+  return grp;
+}
+const g1=buildLeg(LEG1,"#1560c4").addTo(map);
+const g2=buildLeg(LEG2,"#e07b1a").addTo(map);
+map.fitBounds(L.latLngBounds(LEG1.concat(LEG2).map(toLatLng)).pad(0.12));
+
+const legend=L.control({position:"bottomleft"});
+legend.onAdd=function(){
+  const d=L.DomUtil.create("div","legend");
+  d.innerHTML=`<b>Légende</b>`+
+   `<span class="dot" style="background:#1560c4"></span>Leg 1 · Nouméa→Apia<br>`+
+   `<span class="dot" style="background:#e07b1a"></span>Leg 2 · Apia→Papeete<br>`+
+   `<span class="dot" style="background:#e23b1a;box-shadow:0 0 0 2px #b8340c"></span>Station ajoutée (Loy1, Fa'aroa)<br>`+
+   `<span style="display:inline-block;width:10px;height:10px;background:#333;margin-right:6px;vertical-align:-1px"></span>Port / escale<br>`+
+   `<span class="swatch" style="background:#4a7"></span>Frontières ZEE<br>`+
+   `<hr style="border:none;border-top:1px solid #eee;margin:6px 0">`+
+   `<span style="font-size:11px;color:#666">Cliquer une station : instruments + profondeur</span>`;
+  return d;
+};
+legend.addTo(map);
+
+document.getElementById("cbLeg1").onchange=e=>e.target.checked?g1.addTo(map):map.removeLayer(g1);
+document.getElementById("cbLeg2").onchange=e=>e.target.checked?g2.addTo(map):map.removeLayer(g2);
+document.getElementById("cbEEZ").onchange=e=>e.target.checked?eez.addTo(map):map.removeLayer(eez);
+document.getElementById("cbEEZname").onchange=e=>e.target.checked?eezNames.addTo(map):map.removeLayer(eezNames);
+document.getElementById("cbBathy").onchange=e=>e.target.checked?bathy.addTo(map):map.removeLayer(bathy);
+</script>
+</body>
+</html>

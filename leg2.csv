@@ -1,0 +1,21 @@
+Ordre,Zone,Site_ID,Site ID / carotte,Site family,Longitude,Latitude,EEZ,Depth (m),Priorité,CS Site survey (h),C1 CTD/Rosette phyto (h),C2 CTD/Rosette hydro (h),MN MultiNet (h),NP Filet phyto/ADN (h),NM Filet mesozoo (h),CA Calypso (h),MT MultiTube (h),Ops total (h),Commentaire
+1,Apia,Apia,Apia,Port call,-171.783,-13.833,Samoa,,,,,,,,,,,0,Départ (escale)
+2,East Samoa,ESAM,ESAM (ex-WTOK),Water column,-168,-12.5,Haute mer (ABNJ) – à confirmer,4500,1,1,2,3,2,1,1,,4,14,"RENOMMÉE (ex-WTOK) + RECALÉE à l'Est sur route Apia→MH_3. ZEE probable: haute mer, à confirmer sur tracé VLIZ (proximité frontières Samoa/Tokelau-NZ). Coords à ajuster."
+3,ManiHiki,MH_3,ManiHiki 1,depth transect,-162.88845,-11.16221,Îles Cook,2800,1,1,2,,,,,5,3,11,Réordonné (sud d'abord)
+4,ManiHiki,MH_4,ManiHiki High Plateau,depth transect,-161.532,-11.051,Îles Cook,3011,1,,2,,2,1,1,5,3,14,Proposed IODP site
+5,ManiHiki,MH_1,ManiHiki Western Plateaus,depth transect,-165.053,-7.199,Kiribati – îles Line,3589,1,3,2,,,,,,3,8,
+6,ManiHiki,MH_2,ManiHiki North Plateau,depth transect,-164.887,-3.792,Kiribati – îles Line,3558,1,3,2,3,2,1,1,5,3,20,
+7,Line Islands,LI_2,Line islands north,latitudinal transect,-161.63,7.04,États-Unis – Palmyra/Kingman,2798,2,6,3,1,2,1,1,5,3,22,Réordonné (nord avant sud)
+8,Line Islands,LI_1,Line islands south,latitudinal transect,-156.45,0.48,Kiribati – îles Line,2926,2,3,3,3,2,1,1,5,3,21,
+9,Challenger site,CHAL,Challenger,latitudinal transect,-152.33889,-3.64431,France – Polynésie française,4500,1,3,3,1,2,1,1,,4,15,
+10,Vostok,VOST,Vostok,Water column,-151,-10,France – Polynésie française,4500,1,1,2,3,2,1,1,,4,14,
+11,Raiatea,Faaroa,Baie de Fa'aroa (Raiatea),Côtier / carotte,-151.397,-16.82,France – Polynésie française (eaux int.),50,1,,,,,,,4,,4,STATION AJOUTÉE. Carotte seule. Coords approx (baie) — à préciser. Vérifier autorisation locale + adéquation Calypso en baie peu profonde.
+12,Papeete,Pap,Papeete,Port call,-149.5705,-17.5353,France – Polynésie française,,,,,,,,,,,0,Arrivée
+,,,,,,,,,TOTAL ops (h),,,,,,,,,143,
+,,,,,,,,,,,,,,,,,,,
+,Synthèse temps,,,,,,,,,,,,,,,,,,
+,Transit estimé (h),,358.6,Grand-cercle @10 nds (approx),,,,,,,,,,,,,,,
+,Opérations (h),,143,,,,,,,,,,,,,,,,
+,TOTAL (jours),,20.9,,,,,,,,,,,,,,,,
+,Limite (jours),,23,,,,,,,,,,,,,,,,
+,Marge (jours),,2.1,,,,,,,,,,,,,,,,
