@@ -9,26 +9,31 @@ Découpage de la campagne océanographique TransPac 27 en deux *legs* avec escal
 | `TransPac_carte_bathy_v2.html` | Carte interactive (Leaflet) : bathymétrie GEBCO, route des 2 legs, stations cliquables avec instruments, frontières et noms de ZEE. À ouvrir dans un navigateur. |
 | `20260916_TransPac_route.xlsx` | Classeur maître : onglets `20260916_TransPac_leg1`, `20260916_leg2`, et une feuille `Légende`. Contient les formules de calcul des temps. |
 | `leg1.csv` / `leg2.csv` | Export texte des deux legs, pour un suivi des modifications lisible ligne à ligne sous Git. |
-| `export_csv.py` | Régénère `leg1.csv` / `leg2.csv` depuis le classeur. À lancer après chaque modification du `.xlsx`. |
+| `build_map.py` | Régénère les CSV **et** réinjecte les données dans la carte HTML depuis le classeur. À lancer après chaque modification du `.xlsx`. |
 
 > Les CSV sont régénérés depuis le classeur — le `.xlsx` reste la source de vérité (il porte les formules). En cas de divergence, se fier au classeur.
 
-### Mettre à jour les CSV après modification du classeur
+### Mettre à jour tout après modification du classeur
 
-Le workflow recommandé à chaque révision :
+Le classeur `.xlsx` est la **source unique**. La carte et les CSV en sont dérivés : on ne modifie jamais leurs données à la main.
 
 1. Modifier `20260916_TransPac_route.xlsx` dans ton tableur.
 2. **L'enregistrer** (le recalcul des formules se fait à l'ouverture/enregistrement).
-3. Régénérer les CSV :
+3. Tout régénérer :
    ```bash
-   python export_csv.py
+   python build_map.py
    ```
+   Ça réécrit `leg1.csv`, `leg2.csv` et le bloc de données de `TransPac_carte_bathy_v2.html`.
 4. Committer :
    ```bash
    git add -A && git commit -m "Décris le changement" && git push
    ```
 
 Prérequis du script : `pip install openpyxl`. Si les colonnes calculées (Ops total) apparaissent vides dans les CSV, c'est que le classeur n'a pas été recalculé — ouvre-le et réenregistre-le avant de relancer le script.
+
+> **Sous VS Code** : une tâche est préconfigurée dans `.vscode/tasks.json`. Au lieu de taper la commande, appuie sur **`Ctrl+Shift+B`** (macOS : `Cmd+Shift+B`) pour lancer « Régénérer carte + CSV ». Ensuite, gère les commits via le panneau *Source Control* (`Ctrl+Shift+G`) : Stage All → message → Commit → Sync.
+
+**Important** : dans la carte, les données sont écrites entre les marqueurs `// >>> AUTOGEN:DATA` et `// <<< AUTOGEN:DATA`. Ne rien éditer à la main entre ces marqueurs — `build_map.py` les écrase. Tout le reste du HTML (style, logique, noms de ZEE) est libre d'être modifié. Les instruments de chaque station sont déduits automatiquement des colonnes horaires du classeur (une colonne > 0 = instrument présent), et une station est marquée « ajoutée » (rouge) si son commentaire contient « AJOUTÉE » ou « JOKER ».
 
 ## Découpage retenu
 

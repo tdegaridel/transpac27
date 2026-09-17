@@ -50,37 +50,41 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 // [code, site, lon, lat, type, instruments, depth, isNew]
+// ATTENTION : bloc auto-généré par build_map.py depuis 20260916_TransPac_route.xlsx.
+// Ne pas éditer à la main entre les marqueurs AUTOGEN — toute modification sera écrasée.
+// >>> AUTOGEN:DATA
 const LEG1 = [
- ["Nou","Nouméa",166.458,-22.2758,"port","",null,false],
- ["Loy1","Bassin des Loyautés (test)",165.84826,-20.7407,"op","CS,C1,CA","~2100",true],
- ["OJP_1","Explo1",157.0,-4.0,"op","CS,C1,C2,MN,NP,NM,CA,MT","~1600",false],
- ["OJP_2","92BX",156.998,-2.225,"op","CS,C1,MN,MT","1598",false],
- ["OJP_3","83BX",156.31,1.402,"op","CS,C1,C2,MN,NP,MT","2342",false],
- ["OJP_4","ODP807",156.625,3.607,"op","CS,C1,MN,NP,NM,CA,MT","2804",false],
- ["OJP_5","120BX",158.693,-0.025,"op","CS,C1,MN,NP,NM,CA,MT","2247",false],
- ["OJP_6","ODP806",159.369,0.32,"op","CS,C1,MN,NP,NM,CA,MT","2521",false],
- ["OJP_7","123BX",160.415,-0.022,"op","CS,C1,C2,NP,MT","2948",false],
- ["OJP_9","128BX",160.427,-0.005,"op","CS,C1,NP,NM,CA,MT","3732",false],
- ["OJP_8","125BX",160.998,-0.003,"op","CS,C1,MT","3368",false],
- ["NT_1","VM19-96",172.0,-0.867,"op","CS,C1,C2,MN,NM,CA,MT","4252",false],
- ["NT_2","VM28-225",174.467,-8.333,"op","CS,C1,C2,MN,NP,NM,CA,MT","5298",false],
- ["NT_3","VM-joker activé (profil NT_2)",179.0,-10.5,"op","CS,C1,C2,MN,NP,NM,CA,MT","~5000",true],
- ["Apia","Apia",-171.783,-13.833,"port","",null,false],
+ ["Nou","Nouméa",166.458,-22.2758,"port",null,null,false],
+ ["Loy1","Loy1 (test)",165.84826,-20.7407,"op","CS,C1,CA",2100,true],
+ ["OJP_1","Explo1",157.0,-4.0,"op","CS,C1,C2,MN,NP,NM,CA,MT",1600,false],
+ ["OJP_2","92BX",156.998,-2.225,"op","CS,C1,MN,MT",1598,false],
+ ["OJP_3","83BX",156.31,1.402,"op","CS,C1,C2,MN,NP,MT",2342,false],
+ ["OJP_4","ODP 807",156.625,3.607,"op","CS,C1,MN,NP,NM,CA,MT",2804,false],
+ ["OJP_5","120BX",158.693,-0.025,"op","CS,C1,MN,NP,NM,CA,MT",2247,false],
+ ["OJP_6","ODP 806",159.369,0.32,"op","CS,C1,MN,NP,NM,CA,MT",2521,false],
+ ["OJP_7","123BX",160.415,-0.022,"op","CS,C1,C2,NP,MT",2948,false],
+ ["OJP_9","128BX",160.427,-0.005,"op","CS,C1,NP,NM,CA,MT",3732,false],
+ ["OJP_8","125BX",160.998,-0.003,"op","CS,C1,MT",3368,false],
+ ["NT_1","VM19-96",172.0,-0.867,"op","CS,C1,C2,MN,NM,CA,MT",4252,false],
+ ["NT_2","VM28-225",174.467,-8.333,"op","CS,C1,C2,MN,NP,NM,CA,MT",5298,false],
+ ["NT_3","NT_3 (joker)",179.0,-10.5,"op","CS,C1,C2,MN,NP,NM,CA,MT",5000,true],
+ ["Apia","Apia",-171.783,-13.833,"port",null,null,false],
 ];
 const LEG2 = [
- ["Apia","Apia",-171.783,-13.833,"port","",null,false],
- ["ESAM","East Samoa (ex-WTOK, recalé E)",-168.0,-12.5,"op","CS,C1,C2,MN,NP,NM,MT",null,false],
- ["MH_3","ManiHiki 1",-162.88845,-11.16221,"op","CS,C1,CA,MT","2800",false],
- ["MH_4","ManiHiki High",-161.532,-11.051,"op","C1,MN,NP,NM,CA,MT","3011",false],
- ["MH_1","ManiHiki W",-165.053,-7.199,"op","CS,C1,MT","3589",false],
- ["MH_2","ManiHiki N",-164.887,-3.792,"op","CS,C1,C2,MN,NP,NM,CA,MT","3558",false],
- ["LI_2","Line N",-161.63,7.04,"op","CS,C1,C2,MN,NP,NM,CA,MT","2798",false],
- ["LI_1","Line S",-156.45,0.48,"op","CS,C1,C2,MN,NP,NM,CA,MT","2926",false],
- ["CHAL","Challenger",-152.33889,-3.64431,"op","CS,C1,C2,MN,NP,NM,MT",null,false],
- ["VOST","Vostok",-151.0,-10.0,"op","CS,C1,C2,MN,NP,NM,MT",null,false],
- ["Faaroa","Baie de Fa'aroa, Raiatea (carotte)",-151.397,-16.820,"op","CA","côtier",true],
- ["Pap","Papeete",-149.5705,-17.5353,"port","",null,false],
+ ["Apia","Apia",-171.783,-13.833,"port",null,null,false],
+ ["ESAM","ESAM (ex-WTOK)",-168.0,-12.5,"op","CS,C1,C2,MN,NP,NM,MT",4500,false],
+ ["MH_3","ManiHiki 1",-162.88845,-11.16221,"op","CS,C1,CA,MT",2800,false],
+ ["MH_4","ManiHiki High Plateau",-161.532,-11.051,"op","C1,MN,NP,NM,CA,MT",3011,false],
+ ["MH_1","ManiHiki Western Plateaus",-165.053,-7.199,"op","CS,C1,MT",3589,false],
+ ["MH_2","ManiHiki North Plateau",-164.887,-3.792,"op","CS,C1,C2,MN,NP,NM,CA,MT",3558,false],
+ ["LI_2","Line islands north",-161.63,7.04,"op","CS,C1,C2,MN,NP,NM,CA,MT",2798,false],
+ ["LI_1","Line islands south",-156.45,0.48,"op","CS,C1,C2,MN,NP,NM,CA,MT",2926,false],
+ ["CHAL","Challenger",-152.33889,-3.64431,"op","CS,C1,C2,MN,NP,NM,MT",4500,false],
+ ["VOST","Vostok",-151.0,-10.0,"op","CS,C1,C2,MN,NP,NM,MT",4500,false],
+ ["Faaroa","Baie de Fa'aroa (Raiatea)",-151.397,-16.82,"op","CA",50,true],
+ ["Pap","Papeete",-149.5705,-17.5353,"port",null,null,false],
 ];
+// <<< AUTOGEN:DATA
 
 // Noms de ZEE [label, lat, lon]
 const EEZ_NAMES = [
