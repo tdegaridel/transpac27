@@ -1,0 +1,1783 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>TransPac Pacifique Est — Planificateur Papeete → Guayaquil / Panama</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+ :root{--fg:#1a1a1a;--muted:#5b5b5b;--bd:#d9d9d6;--bg:#f6f6f4;--l1:#1560c4;--l2:#e07b1a;--err:#c0392b;--warn:#b7791f;--ok:#2e7d32}
+ *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--fg);background:var(--bg);font-size:13px}
+ header{padding:12px 18px;background:#fff;border-bottom:1px solid var(--bd)} h1{font-size:18px;margin:0 0 3px;font-weight:600}
+ header p{margin:0;color:var(--muted)} section{padding:10px 18px}
+ .bar{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;background:#fff;border-bottom:1px solid var(--bd);padding:8px 18px}
+ .bar label{display:flex;gap:5px;align-items:center} .bar input[type=number]{width:64px}
+ button{font:inherit;padding:4px 10px;border:1px solid #bbb;background:#fafafa;border-radius:5px;cursor:pointer} button:hover{background:#eee}
+ button.primary{background:#1560c4;color:#fff;border-color:#1560c4} button.on{background:#ffe9c2;border-color:#e0a030}
+ #map{height:52vh;min-height:380px;border-bottom:1px solid var(--bd)}
+ .cards{display:flex;gap:12px;flex-wrap:wrap} .card{background:#fff;border:1px solid var(--bd);border-radius:8px;padding:8px 12px;min-width:330px;flex:1}
+ .card h3{margin:0 0 6px;font-size:14px} .card table td{padding:1px 8px 1px 0} .big{font-size:15px;font-weight:600}
+ .ok{color:var(--ok)} .bad{color:var(--err)} .warnc{color:var(--warn)}
+ .legblock{background:#fff;border:1px solid var(--bd);border-radius:8px;margin:10px 0;overflow:auto}
+ .legblock h2{font-size:14px;margin:0;padding:8px 10px;border-bottom:1px solid var(--bd);display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+ .legblock h2 .sw{width:14px;height:14px;border-radius:3px;display:inline-block}
+ table.st{border-collapse:collapse;width:100%;white-space:nowrap} table.st th,table.st td{border-bottom:1px solid #eee;padding:2px 3px;text-align:left}
+ table.st th{position:sticky;top:0;background:#f1f3f6;font-weight:600;font-size:12px}
+ table.st input[type=text]{width:72px} table.st input.n{width:44px} table.st input.c{width:220px} table.st input.ll{width:78px}
+ table.st tr.port{background:#eef6ee} table.st tr.inact{opacity:.45} table.st tr.sel{outline:2px solid #e0a030}
+ td.calc{background:#f8f8fb;font-variant-numeric:tabular-nums} .flag{display:inline-block;border-radius:3px;padding:0 4px;margin:0 2px;font-size:11px}
+ .flag.err{background:#fde2df;color:var(--err)} .flag.warn{background:#fdf0d5;color:var(--warn)} .flag.info{background:#e6eefc;color:#2456a6}
+ .tl{display:flex;height:16px;margin:6px 10px 10px;border:1px solid #ccc;border-radius:3px;overflow:hidden;position:relative}
+ .tl div{height:100%} .tl .tr{background:#d5d9de} .tl .op{background:#2c7fb8} .tl .ca{background:#b8340c}
+ .daily{display:flex;align-items:flex-end;height:60px;gap:1px;margin:0 10px 8px} .daily div{flex:1;background:#2c7fb8;position:relative}
+ .daily div.hi{background:#c0392b} .dlabel{margin:0 10px;color:var(--muted);font-size:11px}
+ .foot{padding:10px 18px;color:var(--muted);font-size:12px;background:#fff;border-top:1px solid var(--bd)}
+ .stlabel{background:rgba(255,255,255,.85)!important;border:1px solid #bbb!important;font-size:11px!important;padding:0 4px!important}
+ .hint{color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<header>
+ <h1>TransPac Pacifique Est — Planificateur Papeete → Guayaquil ou Panama (N/O Pourquoi Pas ?)</h1>
+ <p>Deux options (arrivée Guayaquil ou Panama City). Date d'appareillage pas encore connue : la date affichée est fictive, les jours de campagne (J53 = départ de Papeete) sont la référence. Modifiez stations, profondeurs et opérations : distances, temps de transit, durées Calypso (règle GENAVIR), dates d'arrivée/départ et marges sont recalculés automatiquement. Les modifications sont enregistrées dans ce navigateur ; utilisez « Exporter JSON » pour les partager.</p>
+</header>
+<div class="bar" id="params"></div>
+<div class="bar">
+ <button id="bAdd">+ Ajouter une station (clic sur la carte)</button>
+ <label>dans <select id="selLeg"></select></label>
+ <button id="bOpt">Optimiser l'ordre (2-opt, ports fixes)</button>
+ <button id="bJson">Exporter JSON</button>
+ <label class="hint"><input type="file" id="fJson" accept=".json" style="width:190px"> Importer JSON</label>
+ <button id="bCsv">Exporter CSV (Excel)</button>
+ <button id="bReset">Réinitialiser (version par défaut)</button>
+ <span class="hint" id="status"></span>
+</div>
+<div id="map"></div>
+<section><div class="cards" id="cards"></div></section>
+<section id="legs"></section>
+<div class="foot">
+ Instruments : CS site survey · C1 CTD/Rosette phyto · C2 CTD/Rosette hydro · MN MultiNet · NP filet phyto/ADN · NM filet mésozooplancton · CA carottier Calypso · MT MultiTube (Oktopuss Abyss).<br>
+ Calypso : 2 × profondeur / (3600 × vitesse treuil) + temps fixe (gréement 1h45 + mise à l'eau 30' + mise à bord 45' + extraction 30' + rangement 30' = 4,0 h), arrondi à l'heure supérieure, + bonus par station (début de leg) ; une valeur « forcée » remplace le calcul. Source : GENAVIR, Guide carottiers DEC-SEEM/2024_041 V4.0, p.13 (conditions optimales).
+ MultiTube : saisi à la main ; alerte si inférieur au minimum GENAVIR (45' + filage/virage).<br>
+ Transit : grand-cercle à vitesse constante, opérations enchaînées H24 sans attente. Fuseaux : ports en heure légale ; en mer, fuseau nautique = arrondi(longitude/15) sauf valeur saisie — attention à la ligne de changement de date entre Apia (UTC+13) et l'Est.
+ Fonds : GEBCO 2024 (WMS), Esri Ocean ; frontières ZEE : Marine Regions / VLIZ.
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// TransPac planner — computation engine (pure functions, no DOM).
+// GENAVIR Guide carottiers DEC-SEEM/2024_041 V4.0 p.13 (N/O Pourquoi Pas ?, Calypso II "Long <36 m").
+const INSTR = ["CS","C1","C2","MN","NP","NM"];
+const R_NM = 3440.065;
+
+function haversineNm(lon1, lat1, lon2, lat2){
+  const r = Math.PI/180, p1 = lat1*r, p2 = lat2*r, dp = (lat2-lat1)*r, dl = (lon2-lon1)*r;
+  const a = Math.sin(dp/2)**2 + Math.cos(p1)*Math.cos(p2)*Math.sin(dl/2)**2;
+  return 2*R_NM*Math.asin(Math.sqrt(a));
+}
+function num(v){ const x = parseFloat(v); return isFinite(x) ? x : 0; }
+function stationTz(s){
+  if (s.tz !== null && s.tz !== undefined && s.tz !== "" && isFinite(parseFloat(s.tz))) return parseFloat(s.tz);
+  return Math.round(num(s.lon)/15);
+}
+function calypsoHours(s, P){
+  if (!s.CA) return 0;
+  if (s.CA_override !== null && s.CA_override !== undefined && s.CA_override !== "" && isFinite(parseFloat(s.CA_override)))
+    return parseFloat(s.CA_override);
+  const z = num(s.depth);
+  let h = 2*z/(3600*num(P.winch_ms)) + num(P.ca_fixed_h);
+  if (P.ca_round_up) h = Math.ceil(h - 1e-9);
+  return h + num(s.CA_bonus);
+}
+function multitubeMinHours(s, P){ return 2*num(s.depth)/(3600*num(P.winch_ms)) + num(P.mt_fixed_h); }
+function localToUtcMs(localStr, tz){
+  const m = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/.exec(localStr || "");
+  if (!m) return NaN;
+  return Date.UTC(+m[1], +m[2]-1, +m[3], +m[4], +m[5]) - tz*3600e3;
+}
+function fmt(ms, tz){
+  if (!isFinite(ms)) return "";
+  const d = new Date(ms + tz*3600e3), p = n => String(n).padStart(2,"0");
+  return `${p(d.getUTCDate())}/${p(d.getUTCMonth()+1)}/${d.getUTCFullYear()} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())}`;
+}
+function stationOps(s){ return INSTR.reduce((a,k)=>a+num(s.ops && s.ops[k]),0); }
+
+function computeLeg(leg, P){
+  const rows = [], act = leg.stations.map((s,i)=>({s,i})).filter(o=>o.s.active!==false);
+  const t0 = localToUtcMs(leg.depart_local, num(leg.tz_depart));
+  let t = t0, prev = null, tot = {transit_h:0, ops_h:0, dist_nm:0, nCA:0, nMT:0, CA_h:0, MT_h:0};
+  const segs = [];
+  const d0 = (leg.day0===undefined||leg.day0===null||leg.day0==="") ? null : num(leg.day0);
+  const mid0 = (()=>{ const z=num(leg.tz_depart), L=new Date(t0+z*3600e3); return Date.UTC(L.getUTCFullYear(),L.getUTCMonth(),L.getUTCDate()) - z*3600e3; })();
+  const dayOf = ms => d0===null ? null : d0 + Math.floor((ms - mid0)/86400e3);
+  for (const {s,i} of act){
+    const dist = prev ? haversineNm(num(prev.lon), num(prev.lat), num(s.lon), num(s.lat)) : 0;
+    const tr = dist/num(P.speed_kn);
+    const ca = calypsoHours(s,P), mt = s.port ? 0 : num(s.MT);
+    const ops = s.port ? 0 : stationOps(s) + ca + mt;
+    const arr = t + tr*3600e3, dep = arr + ops*3600e3;
+    if (tr>0) segs.push({type:"transit", start:t, end:arr});
+    if (ops>0) segs.push({type:"ops", start:arr, end:dep, id:s.id, ca, mt});
+    t = dep;
+    const tz = stationTz(s), flags = [];
+    const z = s.depth===null||s.depth===""||s.depth===undefined ? null : num(s.depth);
+    if (!s.port && (s.CA||mt>0) && z===null) flags.push({lvl:"err", msg:"profondeur manquante"});
+    if (z!==null && (s.CA||mt>0) && z>num(P.winch_max_m)) flags.push({lvl:"err", msg:`> prof. max treuil ${P.winch_max_m} m`});
+    else if (z!==null && (s.CA||mt>0) && z>num(P.winch_limited_m)) flags.push({lvl:"warn", msg:`> ${P.winch_limited_m} m (si treuil limité)`});
+    if (s.CA && num(s.ops&&s.ops.CS)===0) flags.push({lvl:"info", msg:"Calypso sans site survey"});
+    if (mt>0 && z!==null && mt < multitubeMinHours(s,P)-1e-9) flags.push({lvl:"warn", msg:`MT < GENAVIR (${multitubeMinHours(s,P).toFixed(1)} h)`});
+    rows.push({idx:i, id:s.id, dist_nm:dist, transit_h:tr, CA_h:ca, MT_h:mt, ops_h:ops, arr, dep, tz,
+               arr_loc:fmt(arr,tz), dep_loc:fmt(dep,tz), arr_utc:fmt(arr,0), dep_utc:fmt(dep,0), jarr:dayOf(arr), jdep:dayOf(dep), flags});
+    tot.transit_h += tr; tot.ops_h += ops; tot.dist_nm += dist; tot.CA_h += ca; tot.MT_h += mt;
+    if (ca>0) tot.nCA++; if (mt>0) tot.nMT++;
+    prev = s;
+  }
+  const elapsed_h = (t - t0)/3600e3, limit_h = num(leg.limit_days)*24;
+  const lastTz = rows.length ? rows[rows.length-1].tz : 0;
+  // daily load (24 h windows from departure)
+  const nDays = Math.max(1, Math.ceil(elapsed_h/24)), daily = Array.from({length:nDays},()=>({ops:0,transit:0}));
+  for (const g of segs){
+    let a = (g.start - t0)/3600e3; const b = (g.end - t0)/3600e3;
+    while (a < b - 1e-9){ const d = Math.floor(a/24), e = Math.min(b,(d+1)*24); if (daily[d]) daily[d][g.type==="ops"?"ops":"transit"] += e-a; a = e; }
+  }
+  return {rows, segs, daily, t0, tEnd:t, tot, elapsed_h, elapsed_days:elapsed_h/24, limit_h, margin_h:limit_h-elapsed_h,
+          deadline_loc:fmt(t0+limit_h*3600e3,lastTz), arrival_loc:fmt(t,lastTz), depart_loc:fmt(t0,num(leg.tz_depart)), jarrival:dayOf(t), jdepart:dayOf(t0)};
+}
+function computeAll(data){ return data.legs.map(l=>computeLeg(l, data.params)); }
+
+// 2-opt on active stations, first and last (ports) fixed.
+function optimizeOrder(leg){
+  const act = leg.stations.filter(s=>s.active!==false), inact = leg.stations.filter(s=>s.active===false);
+  if (act.length < 4) return 0;
+  const d = (a,b)=>haversineNm(num(a.lon),num(a.lat),num(b.lon),num(b.lat));
+  const len = r => r.slice(1).reduce((a,s,k)=>a+d(r[k],s),0);
+  let route = act.slice(), best = len(route), improved = true;
+  const before = best;
+  while (improved){
+    improved = false;
+    for (let i=1;i<route.length-2;i++) for (let j=i+1;j<route.length-1;j++){
+      const r2 = route.slice(0,i).concat(route.slice(i,j+1).reverse(), route.slice(j+1));
+      const L2 = len(r2); if (L2 < best-1e-6){ route=r2; best=L2; improved=true; }
+    }
+  }
+  const last = route.pop(); leg.stations = route.concat(inact, [last]);
+  return before - best;
+}
+if (typeof module !== "undefined") module.exports = {haversineNm, calypsoHours, computeLeg, computeAll, optimizeOrder, localToUtcMs, fmt};
+
+</script>
+<script>
+const DEFAULT_DATA = {
+ "version": "TransPac Pacifique Est v1 — 06/11/2026 (profondeurs du fichier des opérations, règle Calypso GENAVIR)",
+ "params": {
+  "speed_kn": 10,
+  "ca_fixed_h": 4.0,
+  "ca_round_up": true,
+  "winch_ms": 1.0,
+  "mt_fixed_h": 0.75,
+  "winch_max_m": 5290,
+  "winch_limited_m": 3500
+ },
+ "legs": [
+  {
+   "name": "Option A — Papeete → Guayaquil",
+   "depart_local": "2029-02-22T08:00",
+   "tz_depart": -10,
+   "limit_days": 48,
+   "stations": [
+    {
+     "id": "Pap",
+     "name": "Pap",
+     "zone": "",
+     "family": "Port call",
+     "lon": -149.571,
+     "lat": -17.5353,
+     "eez": "French Exclusive Economic Zone (French Polynesia)",
+     "depth": null,
+     "prio": "",
+     "port": true,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 0,
+      "C1": 0,
+      "C2": 0,
+      "MN": 0,
+      "NP": 0,
+      "NM": 0
+     },
+     "MT": 0,
+     "CA": false,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": -10,
+     "comment": ""
+    },
+    {
+     "id": "Tua_1",
+     "name": "Tua_1",
+     "zone": "",
+     "family": "",
+     "lon": -146.58,
+     "lat": -15.541817,
+     "eez": "French Exclusive Economic Zone (French Polynesia)",
+     "depth": 2200.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 9,
+      "C1": 2,
+      "C2": 0,
+      "MN": 2,
+      "NP": 0,
+      "NM": 1
+     },
+     "MT": 3,
+     "CA": true,
+     "CA_bonus": 2,
+     "CA_override": null,
+     "tz": null,
+     "comment": "Prof. classeur 2200 m ; GEBCO 934 m (flanc d'atoll). CA +2 h (1er carottage)."
+    },
+    {
+     "id": "Tua_2",
+     "name": "Tua_2",
+     "zone": "",
+     "family": "",
+     "lon": -145.265,
+     "lat": -16.148533,
+     "eez": "French Exclusive Economic Zone (French Polynesia)",
+     "depth": 2200.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 6,
+      "C1": 0,
+      "C2": 3,
+      "MN": 0,
+      "NP": 0,
+      "NM": 0
+     },
+     "MT": 0,
+     "CA": true,
+     "CA_bonus": 2,
+     "CA_override": null,
+     "tz": null,
+     "comment": "Prof. classeur 2200 m ; GEBCO 1129 m (flanc d'atoll). CA +2 h (2e carottage)."
+    },
+    {
+     "id": "Marq_1",
+     "name": "Marq_1",
+     "zone": "",
+     "family": "",
+     "lon": -139.33,
+     "lat": -9.19,
+     "eez": "French Exclusive Economic Zone (French Polynesia)",
+     "depth": 3376.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 9,
+      "C1": 2,
+      "C2": 0,
+      "MN": 0,
+      "NP": 1,
+      "NM": 0
+     },
+     "MT": 0,
+     "CA": true,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": ""
+    },
+    {
+     "id": "Marq_2",
+     "name": "Marq_2",
+     "zone": "",
+     "family": "",
+     "lon": -141.0,
+     "lat": -8.03,
+     "eez": "French Exclusive Economic Zone (French Polynesia)",
+     "depth": 3070.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 6,
+      "C1": 2,
+      "C2": 3,
+      "MN": 2,
+      "NP": 0,
+      "NM": 1
+     },
+     "MT": 0,
+     "CA": true,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": ""
+    },
+    {
+     "id": "TE_140",
+     "name": "TE_140",
+     "zone": "",
+     "family": "",
+     "lon": -138.95,
+     "lat": 0.95,
+     "eez": "Haute mer",
+     "depth": 4287.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 6,
+      "C1": 2,
+      "C2": 3,
+      "MN": 2,
+      "NP": 1,
+      "NM": 1
+     },
+     "MT": 0,
+     "CA": true,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": ""
+    },
+    {
+     "id": "CP_130",
+     "name": "CP_130",
+     "zone": "",
+     "family": "",
+     "lon": -130.0,
+     "lat": 0.0,
+     "eez": "Haute mer",
+     "depth": 4486.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 0,
+      "C1": 2,
+      "C2": 3,
+      "MN": 2,
+      "NP": 1,
+      "NM": 1
+     },
+     "MT": 0,
+     "CA": false,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": "Pas de carottage (colonne d'eau)."
+    },
+    {
+     "id": "TE_120",
+     "name": "TE_120",
+     "zone": "",
+     "family": "",
+     "lon": -121.6,
+     "lat": 0.05,
+     "eez": "Haute mer",
+     "depth": 4488.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 6,
+      "C1": 2,
+      "C2": 3,
+      "MN": 2,
+      "NP": 1,
+      "NM": 1
+     },
+     "MT": 0,
+     "CA": true,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": ""
+    },
+    {
+     "id": "CP_112",
+     "name": "CP_112",
+     "zone": "",
+     "family": "",
+     "lon": -112.0,
+     "lat": 0.0,
+     "eez": "Haute mer",
+     "depth": 4029.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 0,
+      "C1": 2,
+      "C2": 3,
+      "MN": 2,
+      "NP": 1,
+      "NM": 1
+     },
+     "MT": 0,
+     "CA": false,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": "Pas de carottage (colonne d'eau)."
+    },
+    {
+     "id": "TE_105",
+     "name": "TE_105",
+     "zone": "",
+     "family": "",
+     "lon": -106.767,
+     "lat": 0.0,
+     "eez": "Haute mer",
+     "depth": 3717.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 6,
+      "C1": 2,
+      "C2": 0,
+      "MN": 2,
+      "NP": 1,
+      "NM": 1
+     },
+     "MT": 0,
+     "CA": true,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": "Prof. inconnue dans le classeur (« ? ») : GEBCO 3717 m utilisé."
+    },
+    {
+     "id": "TE_South",
+     "name": "TE_South",
+     "zone": "",
+     "family": "",
+     "lon": -106.767,
+     "lat": -5.517,
+     "eez": "Haute mer",
+     "depth": 3182.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 6,
+      "C1": 2,
+      "C2": 3,
+      "MN": 2,
+      "NP": 1,
+      "NM": 1
+     },
+     "MT": 0,
+     "CA": true,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": ""
+    },
+    {
+     "id": "TE_95",
+     "name": "TE_95",
+     "zone": "",
+     "family": "",
+     "lon": -95.65,
+     "lat": 0.1,
+     "eez": "Haute mer",
+     "depth": 3436.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 6,
+      "C1": 2,
+      "C2": 3,
+      "MN": 2,
+      "NP": 1,
+      "NM": 1
+     },
+     "MT": 0,
+     "CA": true,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": ""
+    },
+    {
+     "id": "Gal_1",
+     "name": "Gal_1",
+     "zone": "",
+     "family": "",
+     "lon": -89.68,
+     "lat": -1.0,
+     "eez": "Ecuadorian Exclusive Economic Zone (Galapagos); Galapagos Exclusive Economic Zone",
+     "depth": 615.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 3,
+      "C1": 2,
+      "C2": 0,
+      "MN": 2,
+      "NP": 1,
+      "NM": 1
+     },
+     "MT": 2,
+     "CA": true,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": "Prof. classeur 615 m ; GEBCO 278 m ; près de San Cristóbal (réserve marine des Galápagos)."
+    },
+    {
+     "id": "Gal_2",
+     "name": "Gal_2",
+     "zone": "",
+     "family": "",
+     "lon": -90.46,
+     "lat": -1.83,
+     "eez": "Ecuadorian Exclusive Economic Zone (Galapagos); Galapagos Exclusive Economic Zone",
+     "depth": 3334.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 3,
+      "C1": 2,
+      "C2": 3,
+      "MN": 0,
+      "NP": 0,
+      "NM": 0
+     },
+     "MT": 2,
+     "CA": true,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": "MT 2 h < minimum GENAVIR (2,6 h à 3334 m)."
+    },
+    {
+     "id": "Gal_3-Cho1",
+     "name": "Gal_3-Cho1",
+     "zone": "",
+     "family": "",
+     "lon": -87.753,
+     "lat": -2.865,
+     "eez": "Ecuadorian Exclusive Economic Zone (Galapagos); Galapagos Exclusive Economic Zone",
+     "depth": 2246.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 3,
+      "C1": 2,
+      "C2": 0,
+      "MN": 2,
+      "NP": 1,
+      "NM": 1
+     },
+     "MT": 0,
+     "CA": true,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": "Prof. classeur 2246 m ; GEBCO 3207 m : à vérifier."
+    },
+    {
+     "id": "Gal_4-Cho2",
+     "name": "Gal_4-Cho2",
+     "zone": "",
+     "family": "",
+     "lon": -87.283,
+     "lat": 1.083,
+     "eez": "Ecuadorian Exclusive Economic Zone (Galapagos); Galapagos Exclusive Economic Zone",
+     "depth": 2714.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 3,
+      "C1": 2,
+      "C2": 3,
+      "MN": 0,
+      "NP": 0,
+      "NM": 1
+     },
+     "MT": 0,
+     "CA": true,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": ""
+    },
+    {
+     "id": "Co_1-Cho3",
+     "name": "Co_1-Cho3",
+     "zone": "",
+     "family": "",
+     "lon": -86.486,
+     "lat": 3.2123,
+     "eez": "Costa Rican Exclusive Economic Zone",
+     "depth": 2674.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 3,
+      "C1": 2,
+      "C2": 0,
+      "MN": 2,
+      "NP": 1,
+      "NM": 1
+     },
+     "MT": 0,
+     "CA": true,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": ""
+    },
+    {
+     "id": "Co_2-Cho4",
+     "name": "Co_2-Cho4",
+     "zone": "",
+     "family": "",
+     "lon": -85.667,
+     "lat": 5.5,
+     "eez": "Costa Rican Exclusive Economic Zone",
+     "depth": 1842.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 3,
+      "C1": 2,
+      "C2": 0,
+      "MN": 0,
+      "NP": 0,
+      "NM": 0
+     },
+     "MT": 3,
+     "CA": true,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": ""
+    },
+    {
+     "id": "Co_3-Cho5",
+     "name": "Co_3-Cho5",
+     "zone": "",
+     "family": "",
+     "lon": -85.433,
+     "lat": 6.9,
+     "eez": "Costa Rican Exclusive Economic Zone",
+     "depth": 2434.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 3,
+      "C1": 2,
+      "C2": 0,
+      "MN": 2,
+      "NP": 1,
+      "NM": 1
+     },
+     "MT": 0,
+     "CA": true,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": ""
+    },
+    {
+     "id": "W_Isth",
+     "name": "W_Isth",
+     "zone": "",
+     "family": "",
+     "lon": -81.28,
+     "lat": 6.42,
+     "eez": "Panamanian Exclusive Economic Zone",
+     "depth": 1821.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 3,
+      "C1": 2,
+      "C2": 0,
+      "MN": 2,
+      "NP": 0,
+      "NM": 0
+     },
+     "MT": 4,
+     "CA": true,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": ""
+    },
+    {
+     "id": "Col_1",
+     "name": "Col_1",
+     "zone": "",
+     "family": "",
+     "lon": -77.47,
+     "lat": 6.38,
+     "eez": "Colombian Exclusive Economic Zone",
+     "depth": 1240.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 3,
+      "C1": 2,
+      "C2": 0,
+      "MN": 2,
+      "NP": 1,
+      "NM": 1
+     },
+     "MT": 3,
+     "CA": true,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": "Prof. classeur 1240 m ; GEBCO 100 m : coordonnées à vérifier."
+    },
+    {
+     "id": "Col_2",
+     "name": "Col_2",
+     "zone": "",
+     "family": "",
+     "lon": -77.963,
+     "lat": 4.66,
+     "eez": "Colombian Exclusive Economic Zone",
+     "depth": 2200.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 3,
+      "C1": 2,
+      "C2": 0,
+      "MN": 2,
+      "NP": 1,
+      "NM": 1
+     },
+     "MT": 4,
+     "CA": true,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": ""
+    },
+    {
+     "id": "Col_3",
+     "name": "Col_3",
+     "zone": "",
+     "family": "",
+     "lon": -79.2,
+     "lat": 2.31,
+     "eez": "Colombian Exclusive Economic Zone",
+     "depth": 2000.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 6,
+      "C1": 2,
+      "C2": 0,
+      "MN": 0,
+      "NP": 1,
+      "NM": 1
+     },
+     "MT": 0,
+     "CA": true,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": "Prof. classeur 2000 m ; GEBCO 1337 m."
+    },
+    {
+     "id": "Gua_1",
+     "name": "Gua_1",
+     "zone": "",
+     "family": "",
+     "lon": -81.0,
+     "lat": -3.15,
+     "eez": "Ecuadorian Exclusive Economic Zone",
+     "depth": 600.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 6,
+      "C1": 2,
+      "C2": 0,
+      "MN": 2,
+      "NP": 1,
+      "NM": 1
+     },
+     "MT": 2,
+     "CA": true,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": ""
+    },
+    {
+     "id": "Gua_2",
+     "name": "Gua_2",
+     "zone": "",
+     "family": "Port call",
+     "lon": -80.2412,
+     "lat": -2.7046,
+     "eez": "Équateur (port)",
+     "depth": null,
+     "prio": "",
+     "port": true,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 0,
+      "C1": 0,
+      "C2": 0,
+      "MN": 0,
+      "NP": 0,
+      "NM": 0
+     },
+     "MT": 0,
+     "CA": false,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": -5,
+     "comment": "Port d'arrivée (coordonnées du fichier, secteur Posorja)."
+    }
+   ],
+   "day0": 53
+  },
+  {
+   "name": "Option B — Papeete → Panama City",
+   "depart_local": "2029-02-22T08:00",
+   "tz_depart": -10,
+   "limit_days": 48,
+   "stations": [
+    {
+     "id": "Pap",
+     "name": "Pap",
+     "zone": "",
+     "family": "Port call",
+     "lon": -149.571,
+     "lat": -17.5353,
+     "eez": "French Exclusive Economic Zone (French Polynesia)",
+     "depth": null,
+     "prio": "",
+     "port": true,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 0,
+      "C1": 0,
+      "C2": 0,
+      "MN": 0,
+      "NP": 0,
+      "NM": 0
+     },
+     "MT": 0,
+     "CA": false,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": -10,
+     "comment": ""
+    },
+    {
+     "id": "Tua_1",
+     "name": "Tua_1",
+     "zone": "",
+     "family": "",
+     "lon": -146.58,
+     "lat": -15.541817,
+     "eez": "French Exclusive Economic Zone (French Polynesia)",
+     "depth": 2200.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 9,
+      "C1": 2,
+      "C2": 0,
+      "MN": 2,
+      "NP": 0,
+      "NM": 1
+     },
+     "MT": 3,
+     "CA": true,
+     "CA_bonus": 2,
+     "CA_override": null,
+     "tz": null,
+     "comment": "Prof. classeur 2200 m ; GEBCO 934 m (flanc d'atoll). CA +2 h (1er carottage)."
+    },
+    {
+     "id": "Tua_2",
+     "name": "Tua_2",
+     "zone": "",
+     "family": "",
+     "lon": -145.265,
+     "lat": -16.148533,
+     "eez": "French Exclusive Economic Zone (French Polynesia)",
+     "depth": 2200.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 6,
+      "C1": 0,
+      "C2": 3,
+      "MN": 0,
+      "NP": 0,
+      "NM": 0
+     },
+     "MT": 0,
+     "CA": true,
+     "CA_bonus": 2,
+     "CA_override": null,
+     "tz": null,
+     "comment": "Prof. classeur 2200 m ; GEBCO 1129 m (flanc d'atoll). CA +2 h (2e carottage)."
+    },
+    {
+     "id": "Marq_1",
+     "name": "Marq_1",
+     "zone": "",
+     "family": "",
+     "lon": -139.33,
+     "lat": -9.19,
+     "eez": "French Exclusive Economic Zone (French Polynesia)",
+     "depth": 3376.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 9,
+      "C1": 2,
+      "C2": 0,
+      "MN": 0,
+      "NP": 1,
+      "NM": 0
+     },
+     "MT": 0,
+     "CA": true,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": ""
+    },
+    {
+     "id": "Marq_2",
+     "name": "Marq_2",
+     "zone": "",
+     "family": "",
+     "lon": -141.0,
+     "lat": -8.03,
+     "eez": "French Exclusive Economic Zone (French Polynesia)",
+     "depth": 3070.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 6,
+      "C1": 2,
+      "C2": 3,
+      "MN": 2,
+      "NP": 0,
+      "NM": 1
+     },
+     "MT": 0,
+     "CA": true,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": ""
+    },
+    {
+     "id": "TE_140",
+     "name": "TE_140",
+     "zone": "",
+     "family": "",
+     "lon": -138.95,
+     "lat": 0.95,
+     "eez": "Haute mer",
+     "depth": 4287.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 6,
+      "C1": 2,
+      "C2": 3,
+      "MN": 2,
+      "NP": 1,
+      "NM": 1
+     },
+     "MT": 0,
+     "CA": true,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": ""
+    },
+    {
+     "id": "CP_130",
+     "name": "CP_130",
+     "zone": "",
+     "family": "",
+     "lon": -130.0,
+     "lat": 0.0,
+     "eez": "Haute mer",
+     "depth": 4486.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 0,
+      "C1": 2,
+      "C2": 3,
+      "MN": 2,
+      "NP": 1,
+      "NM": 1
+     },
+     "MT": 0,
+     "CA": false,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": "Pas de carottage (colonne d'eau)."
+    },
+    {
+     "id": "TE_120",
+     "name": "TE_120",
+     "zone": "",
+     "family": "",
+     "lon": -121.6,
+     "lat": 0.05,
+     "eez": "Haute mer",
+     "depth": 4488.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 6,
+      "C1": 2,
+      "C2": 3,
+      "MN": 2,
+      "NP": 1,
+      "NM": 1
+     },
+     "MT": 0,
+     "CA": true,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": ""
+    },
+    {
+     "id": "CP_112",
+     "name": "CP_112",
+     "zone": "",
+     "family": "",
+     "lon": -112.0,
+     "lat": 0.0,
+     "eez": "Haute mer",
+     "depth": 4029.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 0,
+      "C1": 2,
+      "C2": 3,
+      "MN": 2,
+      "NP": 1,
+      "NM": 1
+     },
+     "MT": 0,
+     "CA": false,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": "Pas de carottage (colonne d'eau)."
+    },
+    {
+     "id": "TE_105",
+     "name": "TE_105",
+     "zone": "",
+     "family": "",
+     "lon": -106.767,
+     "lat": 0.0,
+     "eez": "Haute mer",
+     "depth": 3717.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 6,
+      "C1": 2,
+      "C2": 0,
+      "MN": 2,
+      "NP": 1,
+      "NM": 1
+     },
+     "MT": 0,
+     "CA": true,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": "Prof. inconnue dans le classeur (« ? ») : GEBCO 3717 m utilisé."
+    },
+    {
+     "id": "TE_South",
+     "name": "TE_South",
+     "zone": "",
+     "family": "",
+     "lon": -106.767,
+     "lat": -5.517,
+     "eez": "Haute mer",
+     "depth": 3182.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 6,
+      "C1": 2,
+      "C2": 3,
+      "MN": 2,
+      "NP": 1,
+      "NM": 1
+     },
+     "MT": 0,
+     "CA": true,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": ""
+    },
+    {
+     "id": "TE_95",
+     "name": "TE_95",
+     "zone": "",
+     "family": "",
+     "lon": -95.65,
+     "lat": 0.1,
+     "eez": "Haute mer",
+     "depth": 3436.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 6,
+      "C1": 2,
+      "C2": 3,
+      "MN": 2,
+      "NP": 1,
+      "NM": 1
+     },
+     "MT": 0,
+     "CA": true,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": ""
+    },
+    {
+     "id": "Gal_2",
+     "name": "Gal_2",
+     "zone": "",
+     "family": "",
+     "lon": -90.46,
+     "lat": -1.83,
+     "eez": "Ecuadorian Exclusive Economic Zone (Galapagos); Galapagos Exclusive Economic Zone",
+     "depth": 3334.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 3,
+      "C1": 2,
+      "C2": 3,
+      "MN": 0,
+      "NP": 0,
+      "NM": 0
+     },
+     "MT": 2,
+     "CA": true,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": "MT 2 h < minimum GENAVIR (2,6 h à 3334 m)."
+    },
+    {
+     "id": "Gal_1",
+     "name": "Gal_1",
+     "zone": "",
+     "family": "",
+     "lon": -89.68,
+     "lat": -1.0,
+     "eez": "Ecuadorian Exclusive Economic Zone (Galapagos); Galapagos Exclusive Economic Zone",
+     "depth": 615.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 3,
+      "C1": 2,
+      "C2": 0,
+      "MN": 2,
+      "NP": 1,
+      "NM": 1
+     },
+     "MT": 2,
+     "CA": true,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": "Prof. classeur 615 m ; GEBCO 278 m ; près de San Cristóbal (réserve marine des Galápagos)."
+    },
+    {
+     "id": "Gal_3-Cho1",
+     "name": "Gal_3-Cho1",
+     "zone": "",
+     "family": "",
+     "lon": -87.753,
+     "lat": -2.865,
+     "eez": "Ecuadorian Exclusive Economic Zone (Galapagos); Galapagos Exclusive Economic Zone",
+     "depth": 2246.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 3,
+      "C1": 2,
+      "C2": 0,
+      "MN": 2,
+      "NP": 1,
+      "NM": 1
+     },
+     "MT": 0,
+     "CA": true,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": "Prof. classeur 2246 m ; GEBCO 3207 m : à vérifier."
+    },
+    {
+     "id": "Gua_1",
+     "name": "Gua_1",
+     "zone": "",
+     "family": "",
+     "lon": -81.0,
+     "lat": -3.15,
+     "eez": "Ecuadorian Exclusive Economic Zone",
+     "depth": 600.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 6,
+      "C1": 2,
+      "C2": 0,
+      "MN": 2,
+      "NP": 1,
+      "NM": 1
+     },
+     "MT": 2,
+     "CA": true,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": ""
+    },
+    {
+     "id": "Gal_4-Cho2",
+     "name": "Gal_4-Cho2",
+     "zone": "",
+     "family": "",
+     "lon": -87.283,
+     "lat": 1.083,
+     "eez": "Ecuadorian Exclusive Economic Zone (Galapagos); Galapagos Exclusive Economic Zone",
+     "depth": 2714.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 3,
+      "C1": 2,
+      "C2": 3,
+      "MN": 0,
+      "NP": 0,
+      "NM": 1
+     },
+     "MT": 0,
+     "CA": true,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": ""
+    },
+    {
+     "id": "Co_1-Cho3",
+     "name": "Co_1-Cho3",
+     "zone": "",
+     "family": "",
+     "lon": -86.486,
+     "lat": 3.2123,
+     "eez": "Costa Rican Exclusive Economic Zone",
+     "depth": 2674.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 3,
+      "C1": 2,
+      "C2": 0,
+      "MN": 2,
+      "NP": 1,
+      "NM": 1
+     },
+     "MT": 0,
+     "CA": true,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": ""
+    },
+    {
+     "id": "Co_2-Cho4",
+     "name": "Co_2-Cho4",
+     "zone": "",
+     "family": "",
+     "lon": -85.667,
+     "lat": 5.5,
+     "eez": "Costa Rican Exclusive Economic Zone",
+     "depth": 1842.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 3,
+      "C1": 2,
+      "C2": 0,
+      "MN": 0,
+      "NP": 0,
+      "NM": 0
+     },
+     "MT": 3,
+     "CA": true,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": ""
+    },
+    {
+     "id": "Co_3-Cho5",
+     "name": "Co_3-Cho5",
+     "zone": "",
+     "family": "",
+     "lon": -85.433,
+     "lat": 6.9,
+     "eez": "Costa Rican Exclusive Economic Zone",
+     "depth": 2434.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 3,
+      "C1": 2,
+      "C2": 0,
+      "MN": 2,
+      "NP": 1,
+      "NM": 1
+     },
+     "MT": 0,
+     "CA": true,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": ""
+    },
+    {
+     "id": "W_Isth",
+     "name": "W_Isth",
+     "zone": "",
+     "family": "",
+     "lon": -81.28,
+     "lat": 6.42,
+     "eez": "Panamanian Exclusive Economic Zone",
+     "depth": 1821.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 3,
+      "C1": 2,
+      "C2": 0,
+      "MN": 2,
+      "NP": 0,
+      "NM": 0
+     },
+     "MT": 4,
+     "CA": true,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": ""
+    },
+    {
+     "id": "Col_3",
+     "name": "Col_3",
+     "zone": "",
+     "family": "",
+     "lon": -79.2,
+     "lat": 2.31,
+     "eez": "Colombian Exclusive Economic Zone",
+     "depth": 2000.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 6,
+      "C1": 2,
+      "C2": 0,
+      "MN": 0,
+      "NP": 1,
+      "NM": 1
+     },
+     "MT": 0,
+     "CA": true,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": "Prof. classeur 2000 m ; GEBCO 1337 m."
+    },
+    {
+     "id": "Col_2",
+     "name": "Col_2",
+     "zone": "",
+     "family": "",
+     "lon": -77.963,
+     "lat": 4.66,
+     "eez": "Colombian Exclusive Economic Zone",
+     "depth": 2200.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 3,
+      "C1": 2,
+      "C2": 0,
+      "MN": 2,
+      "NP": 1,
+      "NM": 1
+     },
+     "MT": 4,
+     "CA": true,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": ""
+    },
+    {
+     "id": "Col_1",
+     "name": "Col_1",
+     "zone": "",
+     "family": "",
+     "lon": -77.47,
+     "lat": 6.38,
+     "eez": "Colombian Exclusive Economic Zone",
+     "depth": 1240.0,
+     "prio": "",
+     "port": false,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 3,
+      "C1": 2,
+      "C2": 0,
+      "MN": 2,
+      "NP": 1,
+      "NM": 1
+     },
+     "MT": 3,
+     "CA": true,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": null,
+     "comment": "Prof. classeur 1240 m ; GEBCO 100 m : coordonnées à vérifier."
+    },
+    {
+     "id": "Panama",
+     "name": "Panama",
+     "zone": "",
+     "family": "Port call",
+     "lon": -79.5333,
+     "lat": 8.9167,
+     "eez": "Panama (port)",
+     "depth": null,
+     "prio": "",
+     "port": true,
+     "active": true,
+     "isnew": false,
+     "ops": {
+      "CS": 0,
+      "C1": 0,
+      "C2": 0,
+      "MN": 0,
+      "NP": 0,
+      "NM": 0
+     },
+     "MT": 0,
+     "CA": false,
+     "CA_bonus": 0,
+     "CA_override": null,
+     "tz": -5,
+     "comment": "Port d'arrivée approx. (Balboa / Panama City, 8,92 N 79,53 W)."
+    }
+   ],
+   "day0": 53
+  }
+ ],
+ "alternatives": true,
+ "date_note": "Date d'appareillage inconnue : 22/02/2029 est une valeur fictive. Jour de campagne au départ = J53 (programme des événements)."
+};
+const STORE = "transpac_pacifique_est_planner_v1";
+const COLORS = ["#1560c4","#e07b1a","#2e7d32","#7b1fa2"];
+let data = load(), addMode = false, selected = null;
+
+function load(){ try{ const s = localStorage.getItem(STORE); if (s) return JSON.parse(s); }catch(e){} return JSON.parse(JSON.stringify(DEFAULT_DATA)); }
+function save(){ try{ localStorage.setItem(STORE, JSON.stringify(data)); status("enregistré "+new Date().toLocaleTimeString()); }catch(e){} }
+function status(t){ document.getElementById("status").textContent = t; }
+function esc(v){ return String(v ?? "").replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+function f1(x){ return (Math.round(x*10)/10).toFixed(1); }
+function norm(lon){ return lon<0 ? lon+360 : lon; }
+
+// ---------- parameters ----------
+const PARAMS = [["speed_kn","Vitesse transit (nds)",0.5],["ca_fixed_h","Calypso temps fixe (h)",0.25],["winch_ms","Treuil (m/s)",0.1],
+                ["mt_fixed_h","MT temps fixe (h)",0.05],["winch_max_m","Prof. max treuil (m)",10],["winch_limited_m","Seuil treuil limité (m)",10]];
+function renderParams(){
+  const P = data.params;
+  document.getElementById("params").innerHTML = "<b>Paramètres</b>" + PARAMS.map(([k,l,st])=>
+    `<label>${l} <input type="number" step="${st}" data-p="${k}" value="${esc(P[k])}"></label>`).join("") +
+    `<label><input type="checkbox" data-p="ca_round_up" ${P.ca_round_up?"checked":""}> Calypso arrondi à l'heure sup.</label>`;
+}
+document.getElementById("params").addEventListener("change", e=>{
+  const k = e.target.dataset.p; if (!k) return;
+  data.params[k] = e.target.type==="checkbox" ? e.target.checked : parseFloat(e.target.value);
+  refresh();
+});
+
+// ---------- map ----------
+const map = L.map("map",{worldCopyJump:true}).setView([-6,178],4);
+L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}",{attribution:"Esri Ocean Basemap",maxZoom:10}).addTo(map);
+const bathy = L.tileLayer.wms("https://wms.gebco.net/mapserv?",{layers:"GEBCO_LATEST",format:"image/png",transparent:false,attribution:"GEBCO Compilation Group (2024)"}).addTo(map);
+const eez = L.tileLayer.wms("https://geo.vliz.be/geoserver/MarineRegions/wms?",{layers:"eez_boundaries",format:"image/png",transparent:true,attribution:"Marine Regions (VLIZ)"}).addTo(map);
+L.control.layers(null,{"Bathymétrie GEBCO":bathy,"Frontières ZEE":eez},{collapsed:false}).addTo(map);
+let routeLayer = L.layerGroup().addTo(map), fitted = false;
+
+function icon(color, port, inactive, isnew){
+  const s = port?13:14, bg = inactive?"#fff":(isnew?"#e23b1a":color), sh = port?"0":"50%";
+  return L.divIcon({className:"",html:`<div style="width:${s}px;height:${s}px;border-radius:${sh};background:${port?"#333":bg};border:2px solid ${inactive?color:"#fff"};box-shadow:0 0 0 1px #333"></div>`,iconSize:[s,s],iconAnchor:[s/2,s/2]});
+}
+function renderMap(res){
+  routeLayer.clearLayers(); const all = [];
+  data.legs.forEach((leg,li)=>{
+    const col = COLORS[li%COLORS.length];
+    const pts = leg.stations.filter(s=>s.active!==false).map(s=>[num(s.lat),norm(num(s.lon))]);
+    routeLayer.addLayer(L.polyline(pts,{color:col,weight:3,opacity:.9}));
+    const rowsByIdx = {}; res[li].rows.forEach(r=>rowsByIdx[r.idx]=r);
+    leg.stations.forEach((s,i)=>{
+      const ll = [num(s.lat),norm(num(s.lon))]; all.push(ll);
+      const m = L.marker(ll,{icon:icon(col,s.port,s.active===false,s.isnew),draggable:true});
+      const r = rowsByIdx[i];
+      let h = `<b>${esc(s.id)}</b> — ${esc(s.name)}<br>${num(s.lat).toFixed(4)}°, ${num(s.lon).toFixed(4)}°`;
+      if (s.depth!==null && s.depth!=="") h += ` · ${esc(s.depth)} m`;
+      if (r){ h += `<br>Arrivée ${r.arr_loc} (UTC${r.tz>=0?"+":""}${r.tz})<br>Départ ${r.dep_loc}<br>Ops ${f1(r.ops_h)} h`+(r.CA_h?` · Calypso ${f1(r.CA_h)} h`:"")+(r.MT_h?` · MT ${f1(r.MT_h)} h`:""); }
+      else h += "<br><i>station désactivée</i>";
+      if (s.comment) h += `<div style="max-width:260px;color:#555;font-size:11px;margin-top:3px">${esc(s.comment)}</div>`;
+      m.bindPopup(h); m.bindTooltip(esc(s.id),{permanent:true,direction:"top",offset:[0,-8],className:"stlabel"});
+      m.on("dragend",ev=>{ const p = ev.target.getLatLng(); let lon = p.lng; while(lon>180) lon-=360; while(lon<-180) lon+=360;
+        s.lon = +lon.toFixed(4); s.lat = +p.lat.toFixed(4); refresh(); });
+      m.on("click",()=>{ selected = {li,i}; renderTables(res); });
+      routeLayer.addLayer(m);
+    });
+  });
+  if (!fitted && all.length){ map.fitBounds(L.latLngBounds(all).pad(0.08)); fitted = true; }
+}
+map.on("click", e=>{
+  if (!addMode) return;
+  const li = +document.getElementById("selLeg").value, leg = data.legs[li];
+  let lon = e.latlng.lng; while(lon>180) lon-=360; while(lon<-180) lon+=360;
+  const n = leg.stations.filter(s=>/^NEW/.test(s.id)).length+1;
+  const st = {id:`NEW_${li+1}_${n}`,name:"Nouvelle station",zone:"",family:"",lon:+lon.toFixed(4),lat:+e.latlng.lat.toFixed(4),eez:"",
+              depth:null,prio:"",port:false,active:true,isnew:true,ops:{CS:1,C1:2,C2:0,MN:0,NP:0,NM:0},MT:0,CA:false,CA_bonus:0,CA_override:null,tz:null,comment:"Ajoutée via le planificateur — saisir la profondeur"};
+  // insert at the position that minimises the added distance (ports fixed)
+  const act = leg.stations; let best = act.length-1, bestAdd = Infinity;
+  for (let k=1;k<act.length;k++){ const a = act[k-1], b = act[k];
+    const add = haversineNm(num(a.lon),num(a.lat),st.lon,st.lat)+haversineNm(st.lon,st.lat,num(b.lon),num(b.lat))-haversineNm(num(a.lon),num(a.lat),num(b.lon),num(b.lat));
+    if (add < bestAdd){ bestAdd = add; best = k; } }
+  leg.stations.splice(best,0,st); addMode = false; document.getElementById("bAdd").classList.remove("on");
+  selected = {li,i:best}; refresh(); status(`${st.id} insérée (détour minimal +${f1(bestAdd)} nm)`);
+});
+
+// ---------- tables ----------
+const COLS = ["CS","C1","C2","MN","NP","NM"];
+function renderTables(res){
+  document.getElementById("legs").innerHTML = data.legs.map((leg,li)=>{
+    const R = res[li], col = COLORS[li%COLORS.length], rowsByIdx = {}; R.rows.forEach(r=>rowsByIdx[r.idx]=r);
+    const head = `<tr><th></th><th>Actif</th><th>ID</th><th>Nom</th><th>Lon</th><th>Lat</th><th>Prof. (m)</th>`+
+      COLS.map(c=>`<th>${c} (h)</th>`).join("")+`<th>CA</th><th>CA bonus</th><th>CA forcé</th><th class="calc">CA (h)</th><th>MT (h)</th>`+
+      `<th class="calc">Ops (h)</th><th class="calc">Transit (nm)</th><th class="calc">Transit (h)</th><th>Fuseau</th><th class="calc">Arrivée (locale)</th><th class="calc">Départ (locale)</th><th class="calc">Jour</th><th class="calc">Arrivée (UTC)</th><th>Alertes</th><th>Commentaire</th><th></th></tr>`;
+    const body = leg.stations.map((s,i)=>{
+      const r = rowsByIdx[i], dis = s.port?"disabled":"", sel = selected && selected.li===li && selected.i===i ? " sel":"";
+      const inp = (f,v,cls="n",type="text")=>`<input type="${type}" class="${cls}" data-l="${li}" data-i="${i}" data-f="${f}" value="${esc(v)}" ${dis}>`;
+      return `<tr class="${s.port?"port":""}${s.active===false?" inact":""}${sel}">
+        <td><button data-act="up" data-l="${li}" data-i="${i}" title="monter">↑</button><button data-act="down" data-l="${li}" data-i="${i}" title="descendre">↓</button></td>
+        <td><input type="checkbox" data-l="${li}" data-i="${i}" data-f="active" ${s.active!==false?"checked":""} ${(i===0||i===leg.stations.length-1)?"disabled":""}></td>
+        <td><input type="text" data-l="${li}" data-i="${i}" data-f="id" value="${esc(s.id)}"></td>
+        <td><input type="text" class="c" style="width:150px" data-l="${li}" data-i="${i}" data-f="name" value="${esc(s.name)}"></td>
+        <td>${inp("lon",s.lon,"ll")}</td><td>${inp("lat",s.lat,"ll")}</td><td>${inp("depth",s.depth??"","n")}</td>
+        ${COLS.map(c=>`<td>${inp("ops."+c, s.ops&&s.ops[c]?s.ops[c]:"")}</td>`).join("")}
+        <td><input type="checkbox" data-l="${li}" data-i="${i}" data-f="CA" ${s.CA?"checked":""} ${dis}></td>
+        <td>${inp("CA_bonus",s.CA_bonus||"")}</td><td>${inp("CA_override",s.CA_override??"")}</td>
+        <td class="calc">${r&&r.CA_h?f1(r.CA_h):""}</td><td>${inp("MT",s.MT||"")}</td>
+        <td class="calc"><b>${r&&r.ops_h?f1(r.ops_h):""}</b></td><td class="calc">${r&&r.dist_nm?f1(r.dist_nm):""}</td><td class="calc">${r&&r.transit_h?f1(r.transit_h):""}</td>
+        <td><input type="text" class="n" data-l="${li}" data-i="${i}" data-f="tz" value="${esc(s.tz??"")}" placeholder="${r?r.tz:""}"></td>
+        <td class="calc">${r?r.arr_loc:""}</td><td class="calc">${r?r.dep_loc:""}</td><td class="calc">${r&&r.jarr!==null?("J"+r.jarr+(r.jdep!==r.jarr?"–"+r.jdep:"")):""}</td><td class="calc">${r?r.arr_utc:""}</td>
+        <td>${r?r.flags.map(f=>`<span class="flag ${f.lvl}">${esc(f.msg)}</span>`).join(""):""}</td>
+        <td><input type="text" class="c" data-l="${li}" data-i="${i}" data-f="comment" value="${esc(s.comment)}"></td>
+        <td>${(i===0||i===leg.stations.length-1)?"":`<button data-act="del" data-l="${li}" data-i="${i}" title="supprimer">✕</button>`}</td></tr>`;
+    }).join("");
+    // timeline + daily load
+    const span = R.tEnd - R.t0 || 1;
+    const tl = R.segs.map(g=>`<div class="${g.type==="transit"?"tr":(g.ca?"ca":"op")}" style="width:${100*(g.end-g.start)/span}%" title="${g.type==="transit"?"transit":esc(g.id)+" "+f1((g.end-g.start)/3600e3)+" h"}"></div>`).join("");
+    const daily = R.daily.map((d,k)=>`<div class="${d.ops>20?"hi":""}" style="height:${100*d.ops/24}%" title="J${k+1} : ${f1(d.ops)} h d'opérations"></div>`).join("");
+    return `<div class="legblock"><h2><span class="sw" style="background:${col}"></span>${esc(leg.name)}
+       <label>Appareillage (heure locale) <input type="datetime-local" data-leg="${li}" data-lf="depart_local" value="${esc(leg.depart_local)}"></label>
+       <label>UTC <input type="number" style="width:52px" data-leg="${li}" data-lf="tz_depart" value="${esc(leg.tz_depart)}"></label>
+       <label>Jours de travaux <input type="number" style="width:52px" data-leg="${li}" data-lf="limit_days" value="${esc(leg.limit_days)}"></label>
+       <label>Jour de campagne au départ <input type="number" style="width:52px" data-leg="${li}" data-lf="day0" value="${esc(leg.day0??"")}" placeholder="—"></label></h2>
+       <table class="st"><thead>${head}</thead><tbody>${body}</tbody></table>
+       <div class="dlabel">Chronologie (gris : transit · bleu : opérations · rouge : stations avec Calypso)</div><div class="tl">${tl}</div>
+       <div class="dlabel">Heures d'opérations par jour de campagne (rouge &gt; 20 h/j)</div><div class="daily">${daily}</div></div>`;
+  }).join("");
+}
+document.getElementById("legs").addEventListener("change", e=>{
+  const t = e.target;
+  if (t.dataset.leg!==undefined){ const L = data.legs[+t.dataset.leg]; L[t.dataset.lf] = t.type==="number"?parseFloat(t.value):t.value; refresh(); return; }
+  if (t.dataset.f===undefined) return;
+  const s = data.legs[+t.dataset.l].stations[+t.dataset.i], f = t.dataset.f;
+  let v = t.type==="checkbox" ? t.checked : t.value.trim();
+  if (["lon","lat","depth","MT","CA_bonus","CA_override","tz"].includes(f) || f.startsWith("ops.")) v = v==="" ? (["depth","CA_override","tz"].includes(f)?null:0) : parseFloat(v.replace(",","."));
+  if (f.startsWith("ops.")){ s.ops = s.ops||{}; s.ops[f.slice(4)] = v; } else s[f] = v;
+  refresh();
+});
+document.getElementById("legs").addEventListener("click", e=>{
+  const b = e.target.closest("button[data-act]"); if (!b) return;
+  const leg = data.legs[+b.dataset.l], i = +b.dataset.i, st = leg.stations, n = st.length;
+  if (b.dataset.act==="del"){ if (confirm(`Supprimer ${st[i].id} ?`)) st.splice(i,1); }
+  if (b.dataset.act==="up" && i>1 && i<n-1){ [st[i-1],st[i]] = [st[i],st[i-1]]; }
+  if (b.dataset.act==="down" && i>0 && i<n-2){ [st[i+1],st[i]] = [st[i],st[i+1]]; }
+  refresh();
+});
+
+// ---------- summary cards ----------
+function renderCards(res){
+  document.getElementById("cards").innerHTML = res.map((R,li)=>{
+    const leg = data.legs[li], ok = R.margin_h >= 0;
+    return `<div class="card"><h3 style="color:${COLORS[li%COLORS.length]}">${esc(leg.name)}</h3><table>
+      <tr><td>Appareillage</td><td>${R.depart_loc}${R.jdepart!==null?" (J"+R.jdepart+")":""}</td></tr>
+      <tr><td>Arrivée au port</td><td class="big">${R.arrival_loc}${R.jarrival!==null?" (J"+R.jarrival+")":""}</td></tr>
+      <tr><td>Limite (${leg.limit_days} j)</td><td>${R.deadline_loc}</td></tr>
+      <tr><td>Durée totale</td><td class="big">${R.elapsed_days.toFixed(2)} j</td></tr>
+      <tr><td>Marge</td><td class="big ${ok?"ok":"bad"}">${R.margin_h>=0?"+":""}${f1(R.margin_h)} h (${(R.margin_h/24).toFixed(2)} j)</td></tr>
+      <tr><td>Transit</td><td>${f1(R.tot.transit_h)} h · ${Math.round(R.tot.dist_nm)} nm</td></tr>
+      <tr><td>Opérations</td><td>${f1(R.tot.ops_h)} h (Calypso ${f1(R.tot.CA_h)} h · MT ${f1(R.tot.MT_h)} h)</td></tr>
+      <tr><td>Nombre d'opérations</td><td><b>${R.tot.nCA} Calypso · ${R.tot.nMT} MultiTube</b></td></tr></table></div>`;
+  }).join("") + (data.alternatives ? `<div class="card"><h3>Options alternatives</h3><p class="hint">Les trajets ci-dessus sont des alternatives (même départ, ports d'arrivée différents) : ils ne s'additionnent pas.${data.date_note?"<br>"+esc(data.date_note):""}<br>${esc(data.version||"")}</p></div>` : (()=>{ const c = res.reduce((a,R)=>[a[0]+R.tot.nCA,a[1]+R.tot.nMT],[0,0]);
+     return `<div class="card"><h3>Total campagne</h3><div class="big">${c[0]} Calypso · ${c[1]} MultiTube</div>
+       <p class="hint">${esc(data.version||"")}</p></div>`; })());
+}
+
+// ---------- buttons ----------
+function refresh(){ const res = computeAll(data); renderMap(res); renderTables(res); renderCards(res); save(); }
+document.getElementById("selLeg").innerHTML = data.legs.map((l,i)=>`<option value="${i}">${esc(l.name)}</option>`).join("");
+document.getElementById("bAdd").onclick = e=>{ addMode = !addMode; e.target.classList.toggle("on",addMode); status(addMode?"cliquez sur la carte pour placer la station":""); };
+document.getElementById("bOpt").onclick = ()=>{ const li = +document.getElementById("selLeg").value;
+  const g = optimizeOrder(data.legs[li]); refresh(); status(g>0.05?`ordre optimisé : −${f1(g)} nm`:"aucune amélioration trouvée"); };
+document.getElementById("bReset").onclick = ()=>{ if (confirm("Revenir à la version par défaut ? (les modifications locales seront perdues)")){ data = JSON.parse(JSON.stringify(DEFAULT_DATA)); fitted=false; refresh(); } };
+document.getElementById("bJson").onclick = ()=>download("transpac27_route.json", JSON.stringify(data,null,1), "application/json");
+document.getElementById("fJson").onchange = e=>{ const f = e.target.files[0]; if (!f) return; f.text().then(t=>{ try{ data = JSON.parse(t); fitted=false; refresh(); status("importé : "+f.name);}catch(err){ alert("JSON invalide : "+err);} }); };
+document.getElementById("bCsv").onclick = ()=>{
+  const res = computeAll(data), H = ["Leg","Ordre","Site_ID","Nom","Longitude","Latitude","Profondeur (m)","CS","C1","C2","MN","NP","NM","CA (h)","MT (h)","Ops (h)","Transit (nm)","Transit (h)","Fuseau","Arrivée locale","Départ locale","Arrivée UTC","Départ UTC","Jour arrivée","Jour départ","Alertes","Commentaire"];
+  const lines = [H.join(";")];
+  data.legs.forEach((leg,li)=>res[li].rows.forEach((r,k)=>{ const s = leg.stations[r.idx];
+    const r1 = x=>Math.round(x*10)/10;
+    lines.push([leg.name,k+1,s.id,s.name,s.lon,s.lat,s.depth??"",...COLS.map(c=>s.ops&&s.ops[c]||0),r.CA_h,r.MT_h,r1(r.ops_h),r1(r.dist_nm),r1(r.transit_h),r.tz,r.arr_loc,r.dep_loc,r.arr_utc,r.dep_utc,r.jarr??"",r.jdep??"",r.flags.map(f=>f.msg).join(" | "),s.comment||""]
+      .map(v=>`"${(typeof v==="number"?String(v).replace(".",","):String(v)).replace(/"/g,'""')}"`).join(";")); }));
+  download("transpac27_route.csv", "\ufeff"+lines.join("\n"), "text/csv");
+};
+function download(name, text, type){ const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text],{type})); a.download = name; a.click(); }
+renderParams(); refresh();
+</script>
+</body>
+</html>
