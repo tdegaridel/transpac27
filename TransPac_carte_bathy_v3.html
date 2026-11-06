@@ -104,7 +104,7 @@ const EEZ_NAMES = [
 function norm(lon){ return lon<0 ? lon+360 : lon; }
 function toLatLng(s){ return [s[3], norm(s[2])]; }
 
-const map = L.map('map',{worldCopyJump:true}).setView([-6, 178], 4);
+const map = L.map('map',{worldCopyJump:false}).setView([-6, 178], 4);
 
 const relief = L.tileLayer(
   "https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}",

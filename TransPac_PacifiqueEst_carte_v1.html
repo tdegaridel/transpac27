@@ -41,7 +41,7 @@ const LEGS = [{"name": "Option A — Papeete → Guayaquil", "sts": [{"id": "Pap
 // <<< AUTOGEN:DATA
 const EEZ_NAMES=[["Polynésie française",-14,-142],["Équateur (Galápagos)",-1.5,-92.5],["Costa Rica (île Cocos)",5.3,-87.5],["Panama",7.2,-80.8],["Colombie",4.0,-79.6],["Équateur",-3.5,-82.6],["Haute mer (ABNJ)",3.0,-120]];
 const COL=["#1560c4","#e07b1a"];
-const map=L.map('map',{worldCopyJump:true}).setView([-3,-115],4);
+const map=L.map('map',{worldCopyJump:false}).setView([-3,-115],4);
 L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}",{attribution:"Esri Ocean Basemap",maxZoom:10}).addTo(map);
 const bathy=L.tileLayer.wms("https://wms.gebco.net/mapserv?",{layers:"GEBCO_LATEST",format:"image/png",transparent:false,attribution:"GEBCO Compilation Group (2024)"}).addTo(map);
 const eez=L.tileLayer.wms("https://geo.vliz.be/geoserver/MarineRegions/wms?",{layers:"eez_boundaries",format:"image/png",transparent:true,attribution:"Marine Regions (VLIZ)"}).addTo(map);
