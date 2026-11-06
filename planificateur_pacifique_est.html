@@ -1655,7 +1655,7 @@ function renderMap(res){
       if (r){ h += `<br>Arrivée ${r.arr_loc} (UTC${r.tz>=0?"+":""}${r.tz})<br>Départ ${r.dep_loc}<br>Ops ${f1(r.ops_h)} h`+(r.CA_h?` · Calypso ${f1(r.CA_h)} h`:"")+(r.MT_h?` · MT ${f1(r.MT_h)} h`:""); }
       else h += "<br><i>station désactivée</i>";
       if (s.comment) h += `<div style="max-width:260px;color:#555;font-size:11px;margin-top:3px">${esc(s.comment)}</div>`;
-      if (i>0 && i<leg.stations.length-1) h += `<div style="margin-top:5px"><button onclick="delStation(${li},${i})" style="color:#c0392b">Supprimer cette station</button></div>`;
+      if (leg.stations.length>2) h += `<div style="margin-top:5px"><button onclick="delStation(${li},${i})" style="color:#c0392b">${s.port?"Supprimer cette escale":"Supprimer cette station"}</button></div>`;
       m.bindPopup(h); m.bindTooltip(esc(s.id),{permanent:true,direction:"top",offset:[0,-8],className:"stlabel"});
       m.on("dragend",ev=>{ const p = ev.target.getLatLng(); let lon = p.lng; while(lon>180) lon-=360; while(lon<-180) lon+=360;
         s.lon = +lon.toFixed(4); s.lat = +p.lat.toFixed(4); refresh(); });
@@ -1693,8 +1693,8 @@ function renderTables(res){
       const r = rowsByIdx[i], dis = s.port?"disabled":"", sel = selected && selected.li===li && selected.i===i ? " sel":"";
       const inp = (f,v,cls="n",type="text")=>`<input type="${type}" class="${cls}" data-l="${li}" data-i="${i}" data-f="${f}" value="${esc(v)}" ${dis}>`;
       return `<tr class="${s.port?"port":""}${s.active===false?" inact":""}${sel}">
-        <td><button data-act="up" data-l="${li}" data-i="${i}" title="monter">↑</button><button data-act="down" data-l="${li}" data-i="${i}" title="descendre">↓</button>${(i===0||i===leg.stations.length-1)?"":`<button data-act="del" data-l="${li}" data-i="${i}" title="supprimer la station" style="color:#c0392b">✕</button>`}</td>
-        <td><input type="checkbox" data-l="${li}" data-i="${i}" data-f="active" ${s.active!==false?"checked":""} ${(i===0||i===leg.stations.length-1)?"disabled":""}></td>
+        <td><button data-act="up" data-l="${li}" data-i="${i}" title="monter">↑</button><button data-act="down" data-l="${li}" data-i="${i}" title="descendre">↓</button>${leg.stations.length<=2?"":`<button data-act="del" data-l="${li}" data-i="${i}" title="${s.port?"supprimer l'escale":"supprimer la station"}" style="color:#c0392b">✕</button>`}</td>
+        <td><input type="checkbox" data-l="${li}" data-i="${i}" data-f="active" ${s.active!==false?"checked":""}></td>
         <td><input type="text" data-l="${li}" data-i="${i}" data-f="id" value="${esc(s.id)}"></td>
         <td><input type="text" class="c" style="width:150px" data-l="${li}" data-i="${i}" data-f="name" value="${esc(s.name)}"></td>
         <td>${inp("lon",s.lon,"ll")}</td><td>${inp("lat",s.lat,"ll")}</td><td>${inp("depth",s.depth??"","n")}</td>
@@ -1730,6 +1730,7 @@ document.getElementById("legs").addEventListener("change", e=>{
   const s = data.legs[+t.dataset.l].stations[+t.dataset.i], f = t.dataset.f;
   let v = t.type==="checkbox" ? t.checked : t.value.trim();
   if (["lon","lat","depth","MT","CA_bonus","CA_override","tz"].includes(f) || f.startsWith("ops.")) v = v==="" ? (["depth","CA_override","tz"].includes(f)?null:0) : parseFloat(v.replace(",","."));
+  if (f==="active" && v===false && data.legs[+t.dataset.l].stations.filter(x=>x.active!==false).length<=2){ alert("Il faut au moins deux points actifs."); t.checked=true; return; }
   if (f.startsWith("ops.")){ s.ops = s.ops||{}; s.ops[f.slice(4)] = v; } else s[f] = v;
   refresh();
 });
@@ -1737,8 +1738,8 @@ document.getElementById("legs").addEventListener("click", e=>{
   const b = e.target.closest("button[data-act]"); if (!b) return;
   const leg = data.legs[+b.dataset.l], i = +b.dataset.i, st = leg.stations, n = st.length;
   if (b.dataset.act==="del"){ delStation(+b.dataset.l, i); return; }
-  if (b.dataset.act==="up" && i>1 && i<n-1){ [st[i-1],st[i]] = [st[i],st[i-1]]; }
-  if (b.dataset.act==="down" && i>0 && i<n-2){ [st[i+1],st[i]] = [st[i],st[i+1]]; }
+  if (b.dataset.act==="up" && i>0 && !st[i].port && !st[i-1].port){ [st[i-1],st[i]] = [st[i],st[i-1]]; }
+  if (b.dataset.act==="down" && i<n-1 && !st[i].port && !st[i+1].port){ [st[i+1],st[i]] = [st[i],st[i+1]]; }
   refresh();
 });
 
@@ -1748,7 +1749,7 @@ function renderCards(res){
     const leg = data.legs[li], ok = R.margin_h >= 0;
     return `<div class="card"><h3 style="color:${COLORS[li%COLORS.length]}">${esc(leg.name)}</h3><table>
       <tr><td>Appareillage</td><td>${R.depart_loc}${R.jdepart!==null?" (J"+R.jdepart+")":""}</td></tr>
-      <tr><td>Arrivée au port</td><td class="big">${R.arrival_loc}${R.jarrival!==null?" (J"+R.jarrival+")":""}</td></tr>
+      <tr><td>${(()=>{const L=R.rows[R.rows.length-1]; return L&&leg.stations[L.idx]&&leg.stations[L.idx].port?"Arrivée au port":"Fin des opérations ("+(L?esc(L.id):"")+")";})()}</td><td class="big">${R.arrival_loc}${R.jarrival!==null?" (J"+R.jarrival+")":""}</td></tr>
       <tr><td>Limite (${leg.limit_days} j)</td><td>${R.deadline_loc}</td></tr>
       <tr><td>Durée totale</td><td class="big">${R.elapsed_days.toFixed(2)} j</td></tr>
       <tr><td>Marge</td><td class="big ${ok?"ok":"bad"}">${R.margin_h>=0?"+":""}${f1(R.margin_h)} h (${(R.margin_h/24).toFixed(2)} j)</td></tr>
@@ -1781,7 +1782,7 @@ document.getElementById("bCsv").onclick = ()=>{
 function download(name, text, type){ const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text],{type})); a.download = name; a.click(); }
 const undoStack = [];
 function delStation(li, i){
-  const st = data.legs[li].stations; if (i<=0 || i>=st.length-1) return;
+  const st = data.legs[li].stations; if (st.length<=2 || i<0 || i>=st.length) return;
   if (!confirm(`Supprimer ${st[i].id} de « ${data.legs[li].name} » ?`)) return;
   undoStack.push({li, i, s: st.splice(i,1)[0]}); map.closePopup(); selected = null; refresh();
   status(`${undoStack[undoStack.length-1].s.id} supprimée — « Annuler la suppression » pour la rétablir`);
