@@ -11,3 +11,13 @@ Hypothèses : stations, ordre et opérations de l'onglet TransPac28_Leg3 du fich
 (TE_105 : GEBCO) ; Calypso = arrondi_sup(2 × profondeur / 3600 + 4,0 h) + 2 h sur Tua_1 et Tua_2 (GENAVIR, N/O Pourquoi Pas ?) ;
 10 nds, grand-cercle, opérations H24 ; limite 48 jours (J53 → J101). Date d'appareillage inconnue : la date affichée (22/02/2029) est fictive.
 Option B : ordre optimisé après TE_95 (Gua_1 visité entre Gal_3 et Gal_4), arrivée Panama City approximée à Balboa (8,92 N 79,53 W).
+
+
+## v2 (09/11/2026) : route unique Papeete → Panama City
+
+- Retirés : Gua_1, Gua_2 (Guayaquil) et Col_3. Col_1 déplacée à ≈ 5,4 N 77,5 W (profondeur cible 1240 m ; GEBCO 275 m au point, talus raide).
+- `TransPac_PacifiqueEst_carte_v2.html` : carte de la route unique (la v1 à deux options reste disponible).
+- `planificateur_pacifique_est.html` : données par défaut = route v2 (nouvelle sauvegarde locale, les essais faits sur la v1 ne sont pas repris).
+- `transpac_pacifique_est_route_v2.json`, `TransPac_PacifiqueEst_route_v2.xlsx` : données et calculs v2.
+- `20261109_liste_des-événements_TransPac_PacifiqueEst_v2.xlsm` : programme journalier au format Flotte (feuille « Prog journalier Panama v2 »).
+- Résultat : 6463 nm, 42,01 j sur 48 (marge ≈ +144 h), arrivée J95, 19 Calypso et 7 MultiTube, 362 h d'opérations.

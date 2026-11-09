@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>TransPac Pacifique Est — Carte bathymétrique Papeete → Panama (v2)</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+ :root{--fg:#1a1a1a;--muted:#555;--bd:#ddd;--bg:#f6f6f4}
+ *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--fg);background:var(--bg);font-size:13px}
+ header{padding:14px 18px;border-bottom:1px solid var(--bd);background:#fff} h1{font-size:18px;font-weight:600;margin:0 0 4px} header p{margin:0;color:var(--muted)}
+ .controls{padding:10px 18px;background:#fff;border-bottom:1px solid var(--bd);display:flex;gap:18px;flex-wrap:wrap;font-size:14px}
+ .controls label{display:flex;gap:6px;align-items:center;cursor:pointer}
+ #map{width:100%;height:66vh;min-height:440px}
+ .legend{background:#fff;padding:10px 12px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.2);font-size:12px;line-height:1.6}
+ .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+ .stapopup{font-size:13px;line-height:1.5} .instr span{display:inline-block;background:#eef;border:1px solid #ccd;border-radius:4px;padding:0 5px;margin:1px 2px 1px 0;font-size:11px}
+ .leaflet-tooltip.stlabel{background:rgba(255,255,255,.85);border:1px solid #bbb;font-size:11px;padding:1px 4px}
+ .eezlbl{background:transparent;border:none;box-shadow:none;color:#0a4;font-weight:600;font-size:12px;text-shadow:0 0 3px #fff,0 0 3px #fff}
+ section{padding:10px 18px} .cards{display:flex;gap:12px;flex-wrap:wrap}
+ .card{background:#fff;border:1px solid var(--bd);border-radius:8px;padding:8px 12px;flex:1;min-width:340px}
+ .card h3{margin:0 0 6px;font-size:14px} table{border-collapse:collapse;width:100%} td,th{border-bottom:1px solid #eee;padding:2px 6px;text-align:left;font-size:12px}
+ th{background:#f1f3f6} .num{text-align:right;font-variant-numeric:tabular-nums}
+ .foot{padding:10px 18px;font-size:12px;color:var(--muted);background:#fff;border-top:1px solid var(--bd)}
+</style></head><body>
+<header><h1>TransPac Pacifique Est — Papeete → Panama City (proposition v2)</h1>
+<p>Fond GEBCO 2024. Route unique Papeete → Panama City (sans Gua_1, Gua_2 ni Col_3 ; Col_1 déplacée à ≈ 5,4 N 77,5 W). Cliquez une station pour ses instruments et son jour de campagne (J53 = départ de Papeete ; date d'appareillage non fixée).</p></header>
+<div class="controls">
+ <label><input type="checkbox" id="cbA" checked> Route Papeete → Panama City</label>
+ <label><input type="checkbox" id="cbEEZ" checked> Frontières ZEE</label>
+ <label><input type="checkbox" id="cbEEZname" checked> Noms des ZEE</label>
+ <label><input type="checkbox" id="cbBathy" checked> Bathymétrie GEBCO</label>
+</div>
+<div id="map"></div>
+<section><div class="cards" id="cards"></div></section>
+<div class="foot">Instruments : CS site survey · C1 CTD/Rosette phyto · C2 CTD/Rosette hydro · MN MultiNet · NP filet phyto/ADN · NM filet mésozooplancton · CA carottier Calypso · MT MultiTube.<br>
+Durées : opérations du fichier des opérations (onglet TransPac28_Leg3) ; Calypso selon GENAVIR (Guide carottiers V4.0, N/O Pourquoi Pas ?) ; transit grand-cercle à 10 nds, opérations H24. Les trajets ne contournent pas les côtes (golfe de Panama).<br>
+Bathymétrie : GEBCO Grid (WMS gebco.net). Frontières ZEE : Marine Regions / VLIZ. Noms de ZEE indicatifs.</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// >>> AUTOGEN:DATA
+const LEGS = [{"name": "Papeete → Panama City", "sts": [{"id": "Pap", "lon": -149.571, "lat": -17.5353, "port": true, "depth": null, "eez": "French Exclusive Economic Zone (French Polynesia)", "ins": [], "ops": 0, "ca": 0, "ja": 53, "jd": 53, "com": ""}, {"id": "Tua_1", "lon": -146.58, "lat": -15.541817, "port": false, "depth": 2200.0, "eez": "French Exclusive Economic Zone (French Polynesia)", "ins": ["CS", "C1", "MN", "NM", "CA", "MT"], "ops": 25, "ca": 8, "ja": 54, "jd": 55, "com": "Prof. classeur 2200 m ; GEBCO 934 m (flanc d'atoll). CA +2 h (1er carottage)."}, {"id": "Tua_2", "lon": -145.265, "lat": -16.148533, "port": false, "depth": 2200.0, "eez": "French Exclusive Economic Zone (French Polynesia)", "ins": ["CS", "C2", "CA"], "ops": 17, "ca": 8, "ja": 55, "jd": 56, "com": "Prof. classeur 2200 m ; GEBCO 1129 m (flanc d'atoll). CA +2 h (2e carottage)."}, {"id": "Marq_1", "lon": -139.33, "lat": -9.19, "port": false, "depth": 3376.0, "eez": "French Exclusive Economic Zone (French Polynesia)", "ins": ["CS", "C1", "NP", "CA"], "ops": 18, "ca": 6, "ja": 58, "jd": 59, "com": ""}, {"id": "Marq_2", "lon": -141.0, "lat": -8.03, "port": false, "depth": 3070.0, "eez": "French Exclusive Economic Zone (French Polynesia)", "ins": ["CS", "C1", "C2", "MN", "NM", "CA"], "ops": 20, "ca": 6, "ja": 59, "jd": 60, "com": ""}, {"id": "TE_140", "lon": -138.95, "lat": 0.95, "port": false, "depth": 4287.0, "eez": "Haute mer", "ins": ["CS", "C1", "C2", "MN", "NP", "NM", "CA"], "ops": 22, "ca": 7, "ja": 62, "jd": 63, "com": ""}, {"id": "CP_130", "lon": -130.0, "lat": 0.0, "port": false, "depth": 4486.0, "eez": "Haute mer", "ins": ["C1", "C2", "MN", "NP", "NM"], "ops": 9, "ca": 0, "ja": 66, "jd": 66, "com": "Pas de carottage (colonne d'eau)."}, {"id": "TE_120", "lon": -121.6, "lat": 0.05, "port": false, "depth": 4488.0, "eez": "Haute mer", "ins": ["CS", "C1", "C2", "MN", "NP", "NM", "CA"], "ops": 22, "ca": 7, "ja": 68, "jd": 69, "com": ""}, {"id": "CP_112", "lon": -112.0, "lat": 0.0, "port": false, "depth": 4029.0, "eez": "Haute mer", "ins": ["C1", "C2", "MN", "NP", "NM"], "ops": 9, "ca": 0, "ja": 71, "jd": 72, "com": "Pas de carottage (colonne d'eau)."}, {"id": "TE_105", "lon": -106.767, "lat": 0.0, "port": false, "depth": 3717.0, "eez": "Haute mer", "ins": ["CS", "C1", "MN", "NP", "NM", "CA"], "ops": 19, "ca": 7, "ja": 73, "jd": 74, "com": "Prof. inconnue dans le classeur (« ? ») : GEBCO 3717 m utilisé."}, {"id": "TE_South", "lon": -106.767, "lat": -5.517, "port": false, "depth": 3182.0, "eez": "Haute mer", "ins": ["CS", "C1", "C2", "MN", "NP", "NM", "CA"], "ops": 21, "ca": 6, "ja": 75, "jd": 76, "com": ""}, {"id": "TE_95", "lon": -95.65, "lat": 0.1, "port": false, "depth": 3436.0, "eez": "Haute mer", "ins": ["CS", "C1", "C2", "MN", "NP", "NM", "CA"], "ops": 21, "ca": 6, "ja": 79, "jd": 80, "com": ""}, {"id": "Gal_2", "lon": -90.46, "lat": -1.83, "port": false, "depth": 3334.0, "eez": "Ecuadorian Exclusive Economic Zone (Galapagos); Galapagos Exclusive Economic Zone", "ins": ["CS", "C1", "C2", "CA", "MT"], "ops": 16, "ca": 6, "ja": 82, "jd": 82, "com": "MT 2 h < minimum GENAVIR (2,6 h à 3334 m)."}, {"id": "Gal_1", "lon": -89.68, "lat": -1.0, "port": false, "depth": 615.0, "eez": "Ecuadorian Exclusive Economic Zone (Galapagos); Galapagos Exclusive Economic Zone", "ins": ["CS", "C1", "MN", "NP", "NM", "CA", "MT"], "ops": 16, "ca": 5, "ja": 82, "jd": 83, "com": "Prof. classeur 615 m ; GEBCO 278 m ; près de San Cristóbal (réserve marine des Galápagos)."}, {"id": "Gal_3-Cho1", "lon": -87.753, "lat": -2.865, "port": false, "depth": 2246.0, "eez": "Ecuadorian Exclusive Economic Zone (Galapagos); Galapagos Exclusive Economic Zone", "ins": ["CS", "C1", "MN", "NP", "NM", "CA"], "ops": 15, "ca": 6, "ja": 84, "jd": 84, "com": "Prof. classeur 2246 m ; GEBCO 3207 m : à vérifier."}, {"id": "Gal_4-Cho2", "lon": -87.283, "lat": 1.083, "port": false, "depth": 2714.0, "eez": "Ecuadorian Exclusive Economic Zone (Galapagos); Galapagos Exclusive Economic Zone", "ins": ["CS", "C1", "C2", "NM", "CA"], "ops": 15, "ca": 6, "ja": 85, "jd": 86, "com": ""}, {"id": "Co_1-Cho3", "lon": -86.486, "lat": 3.2123, "port": false, "depth": 2674.0, "eez": "Costa Rican Exclusive Economic Zone", "ins": ["CS", "C1", "MN", "NP", "NM", "CA"], "ops": 15, "ca": 6, "ja": 87, "jd": 87, "com": ""}, {"id": "Co_2-Cho4", "lon": -85.667, "lat": 5.5, "port": false, "depth": 1842.0, "eez": "Costa Rican Exclusive Economic Zone", "ins": ["CS", "C1", "CA", "MT"], "ops": 14, "ca": 6, "ja": 88, "jd": 88, "com": ""}, {"id": "Co_3-Cho5", "lon": -85.433, "lat": 6.9, "port": false, "depth": 2434.0, "eez": "Costa Rican Exclusive Economic Zone", "ins": ["CS", "C1", "MN", "NP", "NM", "CA"], "ops": 15, "ca": 6, "ja": 89, "jd": 89, "com": ""}, {"id": "W_Isth", "lon": -81.28, "lat": 6.42, "port": false, "depth": 1821.0, "eez": "Panamanian Exclusive Economic Zone", "ins": ["CS", "C1", "MN", "CA", "MT"], "ops": 17, "ca": 6, "ja": 90, "jd": 91, "com": ""}, {"id": "Col_2", "lon": -77.963, "lat": 4.66, "port": false, "depth": 2200.0, "eez": "Colombian Exclusive Economic Zone", "ins": ["CS", "C1", "MN", "NP", "NM", "CA", "MT"], "ops": 19, "ca": 6, "ja": 92, "jd": 93, "com": ""}, {"id": "Col_1", "lon": -77.5, "lat": 5.4, "port": false, "depth": 1240.0, "eez": "Colombian Exclusive Economic Zone", "ins": ["CS", "C1", "MN", "NP", "NM", "CA", "MT"], "ops": 17, "ca": 5, "ja": 93, "jd": 94, "com": "Coordonnées révisées (≈ 5,4 N, 77,5 W, fournies par le chef de mission). Prof. cible 1240 m ; GEBCO : 275 m au point, 1426 m à 77,6 W (talus raide) : position exacte à caler sur la bathymétrie."}, {"id": "Panama", "lon": -79.5333, "lat": 8.9167, "port": true, "depth": null, "eez": "Panama (port)", "ins": [], "ops": 0, "ca": 0, "ja": 95, "jd": 95, "com": "Port d'arrivée approx. (Balboa / Panama City, 8,92 N 79,53 W)."}], "days": 42.01065662927698, "margin": 143.74424089735248, "ja": 95, "nCA": 19, "nMT": 7, "dist": 6462.557591028042}];
+// <<< AUTOGEN:DATA
+const EEZ_NAMES=[["Polynésie française",-14,-142],["Équateur (Galápagos)",-1.5,-92.5],["Costa Rica (île Cocos)",5.3,-87.5],["Panama",7.2,-80.8],["Colombie",4.0,-79.6],["Haute mer (ABNJ)",3.0,-120]];
+const COL=["#1560c4","#e07b1a"];
+const map=L.map('map',{worldCopyJump:false}).setView([-3,-115],4);
+L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}",{attribution:"Esri Ocean Basemap",maxZoom:10}).addTo(map);
+const bathy=L.tileLayer.wms("https://wms.gebco.net/mapserv?",{layers:"GEBCO_LATEST",format:"image/png",transparent:false,attribution:"GEBCO Compilation Group (2024)"}).addTo(map);
+const eez=L.tileLayer.wms("https://geo.vliz.be/geoserver/MarineRegions/wms?",{layers:"eez_boundaries",format:"image/png",transparent:true,attribution:"Marine Regions (VLIZ)"}).addTo(map);
+const eezNames=L.layerGroup(); EEZ_NAMES.forEach(z=>{const m=L.marker([z[1],z[2]],{opacity:0,interactive:false});m.bindTooltip(z[0],{permanent:true,direction:"center",className:"eezlbl"});eezNames.addLayer(m);}); eezNames.addTo(map);
+function esc(v){return String(v??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function icon(c,port){const s=port?13:13;return L.divIcon({className:"",html:`<div style="width:${s}px;height:${s}px;border-radius:${port?0:50}%;background:${port?"#333":c};border:2px solid #fff;box-shadow:0 0 0 1px #333"></div>`,iconSize:[s,s],iconAnchor:[s/2,s/2]});}
+function jtxt(s){return s.ja==null?"":("J"+s.ja+(s.jd!==s.ja?"–"+s.jd:""));}
+const groups=LEGS.map((leg,li)=>{const g=L.layerGroup(); const c=COL[li];
+  g.addLayer(L.polyline(leg.sts.map(s=>[s.lat,s.lon]),{color:c,weight:3,opacity:.9,dashArray:li?"6 5":null}));
+  leg.sts.forEach(s=>{ const m=L.marker([s.lat,s.lon],{icon:icon(c,s.port)});
+    let h=`<div class="stapopup"><b>${esc(s.id)}</b><br>${s.lat.toFixed(3)}°, ${s.lon.toFixed(3)}°`+(s.depth?` · ${Math.round(s.depth)} m`:"")+`<br>${esc(s.eez)}<br>${esc(leg.name)} : ${jtxt(s)}`+(s.ops?` · ops ${s.ops} h`:"")+(s.ca?` (Calypso ${s.ca} h)`:"");
+    if(s.ins.length) h+=`<div class="instr">${s.ins.map(i=>`<span>${i}</span>`).join("")}</div>`;
+    if(s.com) h+=`<div style="max-width:260px;color:#555;font-size:11px;margin-top:3px">${esc(s.com)}</div>`;
+    m.bindPopup(h+"</div>"); m.bindTooltip(esc(s.id),{permanent:true,direction:"top",offset:[0,-8],className:"stlabel"}); g.addLayer(m);});
+  return g.addTo(map);});
+map.fitBounds(L.latLngBounds(LEGS.flatMap(l=>l.sts.map(s=>[s.lat,s.lon]))).pad(0.06));
+const lg=L.control({position:"bottomleft"}); lg.onAdd=()=>{const d=L.DomUtil.create("div","legend");
+ d.innerHTML="<b>Légende</b><br>"+LEGS.map((l,i)=>`<span class="dot" style="background:${COL[i]}"></span>${esc(l.name)}`).join("<br>")+`<br><span style="display:inline-block;width:10px;height:10px;background:#333;margin-right:6px"></span>Port`;return d;}; lg.addTo(map);
+document.getElementById("cards").innerHTML=LEGS.map((l,i)=>`<div class="card"><h3 style="color:${COL[i]}">${esc(l.name)}</h3>
+ <p>${Math.round(l.dist)} nm · ${l.days.toFixed(2)} j sur 48 (marge ${l.margin>=0?"+":""}${l.margin.toFixed(0)} h) · arrivée J${l.ja} · ${l.nCA} Calypso · ${l.nMT} MultiTube</p>
+ <table><tr><th>#</th><th>Station</th><th class="num">Prof. (m)</th><th>Jour</th><th class="num">Ops (h)</th></tr>${l.sts.map((s,k)=>`<tr><td>${k+1}</td><td>${esc(s.id)}</td><td class="num">${s.depth?Math.round(s.depth):""}</td><td>${jtxt(s)}</td><td class="num">${s.ops||""}</td></tr>`).join("")}</table></div>`).join("");
+document.getElementById("cbA").onchange=e=>e.target.checked?groups[0].addTo(map):map.removeLayer(groups[0]);
+document.getElementById("cbEEZ").onchange=e=>e.target.checked?eez.addTo(map):map.removeLayer(eez);
+document.getElementById("cbEEZname").onchange=e=>e.target.checked?eezNames.addTo(map):map.removeLayer(eezNames);
+document.getElementById("cbBathy").onchange=e=>e.target.checked?bathy.addTo(map):map.removeLayer(bathy);
+</script></body></html>
